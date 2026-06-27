@@ -10,3 +10,8 @@ target_include_directories(islewright-common
     PUBLIC
         include
 )
+
+target_link_libraries(islewright-common
+    PUBLIC
+        EnTT::EnTT
+)

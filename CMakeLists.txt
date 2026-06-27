@@ -7,6 +7,9 @@ project(
     LANGUAGES CXX
 )
 
+find_package(EnTT CONFIG REQUIRED)
+find_package(SDL3 CONFIG REQUIRED)
+
 add_subdirectory(common)
 add_subdirectory(client)
 add_subdirectory(server)

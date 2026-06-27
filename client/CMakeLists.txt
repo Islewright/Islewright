@@ -5,4 +5,5 @@ add_executable(islewright-client
 target_link_libraries(islewright-client
     PRIVATE
         Islewright::common
+        SDL3::SDL3
 )
