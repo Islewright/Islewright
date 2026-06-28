@@ -1,0 +1,51 @@
+name: Windows
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+jobs:
+  build-windows:
+    strategy:
+      matrix:
+        include:
+          # Windows Server 2025 + Visual Studio 2026
+          - name: "Windows Server 2025 + Visual Studio 2026"
+            os: windows-2025-vs2026
+            solution: Islewright.slnx
+          # Windows Server 2022 + Visual Studio 2022
+          - name: "Windows Server 2022 + Visual Studio 2022"
+            os: windows-2022
+            solution: Islewright.sln
+
+    runs-on: ${{ matrix.os }}
+    name: 🪟 Build - ${{ matrix.name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: Cache vcpkg binary packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg-cache
+          key: windows-vcpkg-${{ matrix.os }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            windows-vcpkg-${{ matrix.os }}-
+
+      - name: Add MSBuild to PATH
+        uses: microsoft/setup-msbuild@v2
+
+      - name: Build
+        run: |
+          $env:VCPKG_BINARY_SOURCES = "clear;files,${{ github.workspace }}\vcpkg-cache,readwrite"
+          cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="${{ env.CMAKE_TOOLCHAIN_FILE }}"
+          MSBuild.exe "build\${{ matrix.solution }}" /p:Configuration=Release /m
