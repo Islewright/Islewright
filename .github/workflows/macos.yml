@@ -24,21 +24,6 @@ jobs:
             os: macos-15
             compiler: xcode
             version: "16.4"
-          # macOS 26.3 + gcc-15
-          - name: "macOS 26.3 + gcc-15"
-            os: macos-26
-            compiler: gcc
-            version: "15"
-          # macOS 26.3 + gcc-14
-          - name: "macOS 26.3 + gcc-14"
-            os: macos-26
-            compiler: gcc
-            version: "14"
-          # macOS 26.3 + gcc-13
-          - name: "macOS 26.3 + gcc-13"
-            os: macos-26
-            compiler: gcc
-            version: "13"
 
     runs-on: ${{ matrix.os }}
     name: 🍎 Build - ${{ matrix.name }}
@@ -63,15 +48,9 @@ jobs:
 
       - name: Configure Compiler
         run: |
-          if [ "${{ matrix.compiler }}" = "gcc" ]; then
-            brew install gcc@${{ matrix.version }}
-            echo "CC=gcc-${{ matrix.version }}" >> "$GITHUB_ENV"
-            echo "CXX=g++-${{ matrix.version }}" >> "$GITHUB_ENV"
-          else
-            sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
-            echo "CC=clang" >> "$GITHUB_ENV"
-            echo "CXX=clang++" >> "$GITHUB_ENV"
-          fi
+          sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
+          echo "CC=clang" >> "$GITHUB_ENV"
+          echo "CXX=clang++" >> "$GITHUB_ENV"
 
       - name: Configure Build
         run: |
