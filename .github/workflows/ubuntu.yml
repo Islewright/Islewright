@@ -80,6 +80,7 @@ jobs:
             libegl1-mesa-dev \
             libibus-1.0-dev \
             libpulse-dev \
+            libltdl-dev \
             libudev-dev \
             libwayland-dev \
             libx11-dev \
