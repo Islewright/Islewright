@@ -1,0 +1,61 @@
+name: macOS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+jobs:
+  build-macos:
+    strategy:
+      matrix:
+        include:
+          # macOS 26.3 + Xcode 26.3
+          - name: "macOS 26.3 + Xcode 26.3"
+            os: macos-26
+            compiler: xcode
+            version: "26.3"
+          # macOS 15.7.4 + Xcode 16.4
+          - name: "macOS 15.7.4 + Xcode 16.4"
+            os: macos-15
+            compiler: xcode
+            version: "16.4"
+
+    runs-on: ${{ matrix.os }}
+    name: 🍎 Build - ${{ matrix.name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: Cache vcpkg binary packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg-cache
+          key: macos-vcpkg-${{ matrix.compiler }}-${{ matrix.version }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            macos-vcpkg-${{ matrix.compiler }}-${{ matrix.version }}-
+
+      - name: Install system packages
+        run: brew install autoconf automake autoconf-archive libtool ninja pkg-config
+
+      - name: Configure Compiler
+        run: |
+          sudo xcode-select -switch /Applications/Xcode_${{ matrix.version }}.app
+          echo "CC=clang" >> "$GITHUB_ENV"
+          echo "CXX=clang++" >> "$GITHUB_ENV"
+
+      - name: Configure Build
+        run: |
+          export VCPKG_BINARY_SOURCES="clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN_FILE"
+
+      - name: Build
+        run: cmake --build build --parallel

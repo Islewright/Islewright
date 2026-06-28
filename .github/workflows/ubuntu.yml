@@ -1,0 +1,114 @@
+name: Ubuntu
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  CMAKE_TOOLCHAIN_FILE: ${{ github.workspace }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+jobs:
+  build-ubuntu:
+    strategy:
+      matrix:
+        include:
+          # Ubuntu 24.04 + gcc-14
+          - name: "Ubuntu 24.04 + gcc-14"
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "14"
+          # Ubuntu 24.04 + gcc-13
+          - name: "Ubuntu 24.04 + gcc-13"
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "13"
+          # Ubuntu 24.04 + gcc-12
+          - name: "Ubuntu 24.04 + gcc-12"
+            os: ubuntu-24.04
+            compiler: gcc
+            version: "12"
+          # Ubuntu 24.04 + clang-18
+          - name: "Ubuntu 24.04 + clang-18"
+            os: ubuntu-24.04
+            compiler: clang
+            version: "18"
+          # Ubuntu 24.04 + clang-17
+          - name: "Ubuntu 24.04 + clang-17"
+            os: ubuntu-24.04
+            compiler: clang
+            version: "17"
+          # Ubuntu 24.04 + clang-16
+          - name: "Ubuntu 24.04 + clang-16"
+            os: ubuntu-24.04
+            compiler: clang
+            version: "16"
+
+    runs-on: ${{ matrix.os }}
+    name: 🐧 Build - ${{ matrix.name }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
+
+      - name: Cache vcpkg binary packages
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg-cache
+          key: ubuntu-vcpkg-${{ matrix.compiler }}-${{ matrix.version }}-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            ubuntu-vcpkg-${{ matrix.compiler }}-${{ matrix.version }}-
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            autoconf \
+            automake \
+            autoconf-archive \
+            libtool \
+            pkg-config \
+            ninja-build \
+            libasound2-dev \
+            libdbus-1-dev \
+            libdecor-0-dev \
+            libdrm-dev \
+            libegl1-mesa-dev \
+            libibus-1.0-dev \
+            libpulse-dev \
+            libltdl-dev \
+            libudev-dev \
+            libwayland-dev \
+            libx11-dev \
+            libxcursor-dev \
+            libxext-dev \
+            libxfixes-dev \
+            libxi-dev \
+            libxinerama-dev \
+            libxkbcommon-dev \
+            libxrandr-dev \
+            libxss-dev \
+            libxtst-dev \
+            wayland-protocols
+
+      - name: Configure Compiler
+        run: |
+          if [ "${{ matrix.compiler }}" = "gcc" ]; then
+            echo "CC=gcc-${{ matrix.version }}" >> $GITHUB_ENV
+            echo "CXX=g++-${{ matrix.version }}" >> $GITHUB_ENV
+          else
+            echo "CC=clang-${{ matrix.version }}" >> $GITHUB_ENV
+            echo "CXX=clang++-${{ matrix.version }}" >> $GITHUB_ENV
+          fi
+
+      - name: Configure Build
+        run: |
+          export VCPKG_BINARY_SOURCES="clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN_FILE"
+
+      - name: Build
+        run: cmake --build build --parallel
