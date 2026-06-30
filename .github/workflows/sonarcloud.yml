@@ -38,7 +38,7 @@ jobs:
 
       - name: Cache vcpkg binary packages
         if: ${{ env.SONAR_TOKEN != '' }}
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/vcpkg-cache
           key: sonarcloud-vcpkg-${{ hashFiles('vcpkg.json') }}
