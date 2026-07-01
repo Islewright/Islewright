@@ -1,4 +1,7 @@
-#pragma once
+#ifndef ISLEWRIGHT_COMMON_RNG_HPP
+#define ISLEWRIGHT_COMMON_RNG_HPP
+
+#include "islewright/common/coords.hpp"
 
 #include <cstdint>
 
@@ -15,15 +18,18 @@ constexpr std::uint64_t splitmix64(std::uint64_t x) noexcept
 
 // Derives a deterministic 64-bit value from a world seed and chunk coordinates,
 // suitable for seeding a per-chunk RNG. Order-sensitive in (cx, cy):
-// hash_coord(s, 1, 2) != hash_coord(s, 2, 1). World generation must seed RNGs
-// from coordinates this way, never from entity ids or iteration order, so the
-// same seed always reproduces the same world.
-constexpr std::uint64_t hash_coord(std::uint64_t seed, int cx, int cy) noexcept
+// hash_coord(s, {1, 2}) != hash_coord(s, {2, 1}). Taking a ChunkCoord instead
+// of two loose ints stops call sites from silently swapping the axes. World
+// generation must seed RNGs from coordinates this way, never from entity ids or
+// iteration order, so the same seed always reproduces the same world.
+constexpr std::uint64_t hash_coord(std::uint64_t seed, ChunkCoord chunk) noexcept
 {
     std::uint64_t h = splitmix64(seed);
-    h = splitmix64(h ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(cx)));
-    h = splitmix64(h ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(cy)));
+    h = splitmix64(h ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(chunk.cx)));
+    h = splitmix64(h ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(chunk.cy)));
     return h;
 }
 
 } // namespace islewright::common
+
+#endif // ISLEWRIGHT_COMMON_RNG_HPP
