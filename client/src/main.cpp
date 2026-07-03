@@ -27,6 +27,7 @@ int main(int argc, char* argv[])
     // Check that the window was successfully created
     if (window == nullptr) {
         SDL_LogError(SDL_LOG_CATEGORY_ERROR, "Could not create window: %s\n", SDL_GetError());
+        SDL_Quit();
         return EXIT_FAILURE;
     }
 
