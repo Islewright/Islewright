@@ -21,6 +21,21 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+    bool done = false;
+
+    // Main loop
+    while (!done) {
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event)) {
+            if (event.type == SDL_EVENT_QUIT) {
+                done = true;
+            }
+        }
+
+        // TODO: Do game logic, present a frame, etc.
+    }
+
     // Close and destroy the window
     SDL_DestroyWindow(window);
 
