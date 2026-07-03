@@ -1,7 +1,10 @@
+#include "config.hpp"
 #include "islewright/common/version.hpp"
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
+
+using namespace islewright::config;
 
 int main(int argc, char* argv[])
 {
@@ -9,7 +12,8 @@ int main(int argc, char* argv[])
     SDL_Init(SDL_INIT_VIDEO);
 
     // Create an application window with the following settings
-    SDL_Window* window = SDL_CreateWindow("Islewright", 800, 600, SDL_WINDOW_OPENGL);
+    SDL_Window* window =
+        SDL_CreateWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_OPENGL);
 
     // Check that the window was successfully created
     if (window == nullptr) {
