@@ -27,11 +27,24 @@ class IslewrighterServer : public IOCPServer
         std::cout << message;
     }
 
-    void OnDisConnect() override {}
+    void OnDisConnect(const UINT32 u32ClientIndex) override {}
 
-    void OnRecieve() override {}
+    void OnReceive(const UINT32 u32ClientIndex, const char* pMessage, const DWORD dwTrasferredSize) override 
+    {
+        std::string_view msg(pMessage, dwTrasferredSize);
 
-    void OnSend() override {}
+        std::string message = std::format("Message from Client{0}: {1}\n", u32ClientIndex, msg);
+        std::cout << message;
+    }
+
+    void OnSend(const UINT32 u32ClientIndex, const char* pMessage, const DWORD dwTrasferredSize) override 
+    {
+        std::string_view msg(pMessage, dwTrasferredSize);
+
+        std::string message = std::format("Message from Client{0}: {1}\n", u32ClientIndex, msg);
+        std::cout << message;
+    }
+
 
 };
 

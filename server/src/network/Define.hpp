@@ -26,22 +26,6 @@ typedef struct OverlappedEx{
     UINT64 clientIndex;
     IOOperation operation;
     WSABUF wsabuf;
-    char* buf;
-
-    OverlappedEx()
-    {
-        ZeroMemory(&overlapped, sizeof(WSAOVERLAPPED));
-
-        buf = new char[MAX_BUFFER_SIZE];
-        ZeroMemory(buf, MAX_BUFFER_SIZE);
-
-        wsabuf.buf = buf;
-        wsabuf.len = MAX_BUFFER_SIZE;
-    }
-
-    ~OverlappedEx() {
-        delete[] buf;
-    }
 }OverlappedEx,* lpOverlappedEx;
 
 #endif

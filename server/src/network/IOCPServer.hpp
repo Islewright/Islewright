@@ -5,7 +5,6 @@
 #include "ClientInfo.hpp"
 #include <thread>
 #include <vector>
-#include <print>
 
 
 class IOCPServer 
@@ -114,11 +113,11 @@ class IOCPServer
     // Network IO Callback overrided at business logic
     virtual void OnConnect(const UINT32 u32ClientIndex) {}
     
-    virtual void OnDisConnect() {}
+    virtual void OnDisConnect(const UINT32 u32ClientIndex) {}
 
-    virtual void OnRecieve() {}
+    virtual void OnReceive(const UINT32 u32ClientIndex, const char* pMessage, const DWORD dwTrasferredSize) {}
 
-    virtual void OnSend() {}
+    virtual void OnSend(const UINT32 u32ClientIndex, const char* pMessage, const DWORD dwTrasferredSize) {}
 
     private:
 
@@ -180,7 +179,7 @@ class IOCPServer
     void WorkerThread() 
     {
         DWORD bytesTransferred = 0;
-        ULONG_PTR completionKey = 0;
+        ClientInfo* clientInfo = nullptr;
         LPOVERLAPPED overlapped = nullptr;
 
         while(isWorkerRun_)
@@ -188,7 +187,7 @@ class IOCPServer
             BOOL success = GetQueuedCompletionStatus(
                 iocp_,
                 &bytesTransferred,
-                &completionKey,
+                (PULONG_PTR)&clientInfo,
                 &overlapped,
                 INFINITE
             );
@@ -197,21 +196,34 @@ class IOCPServer
 
             if (!success)
             {
-
+                //TODO: 에러처리
             }
 
             // Client Connection Closed
-            if (bytesTransferred = 0)
+            if (bytesTransferred == 0)
             {
                 clientInfos_[overlappedEx->clientIndex]->DisConnect();
 
-                delete overlappedEx;
-                
+                OnDisConnect(overlappedEx->clientIndex);
                 continue;
+            }
+            
+            if (overlappedEx->operation == IOOperation::RECV)
+            {
+                OnReceive(overlappedEx->clientIndex, clientInfo->RecvBuffer(), bytesTransferred);
+
+                clientInfo->RegisterReceive();
+            }
+            else if (overlappedEx->operation == IOOperation::SEND)
+            {
+                OnSend(overlappedEx->clientIndex, clientInfo->RecvBuffer(), bytesTransferred);
+
+                //clientInfo->RegisterReceive();
             }
         }
     }
 
+    // TODO: Sequential Search. Bottle neck on accept exists
     ClientInfo* GetEmptyClient() 
     {
         for(UINT32 i = 0; i < maxClientCount_; i++)
