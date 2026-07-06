@@ -12,6 +12,9 @@ class InputState
     void HandleEvent(const SDL_Event& event) noexcept;
 
     bool QuitRequested() const noexcept;
+
+  private:
+    bool m_quitRequested = false;
 };
 
 } // namespace islewright::input
