@@ -4,6 +4,8 @@ add_executable(islewright-server
     src/network/ClientInfo.hpp
     src/network/IOCPServer.hpp
     src/network/IslewrighterServer.hpp
+    src/network/MemoryPool.hpp
+
 )
 
 target_link_libraries(islewright-server
