@@ -1,6 +1,7 @@
 add_executable(islewright-client
+    src/input.cpp
     src/main.cpp
-)
+ )
 
 target_link_libraries(islewright-client
     PRIVATE

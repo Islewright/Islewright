@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "input.hpp"
 #include "islewright/common/version.hpp"
 
 #include <SDL3/SDL.h>
@@ -6,13 +7,12 @@
 #include <cstdlib>
 #include <iostream>
 
-using namespace islewright::config;
+using namespace islewright;
 
 int main(int argc, char* argv[])
 {
     // Print the project name and version
-    std::cout << islewright::common::project_name() << " client "
-              << islewright::common::project_version() << '\n';
+    std::cout << common::project_name() << " client " << common::project_version() << '\n';
 
     // Initialize SDL3
     if (!SDL_Init(SDL_INIT_VIDEO)) {
@@ -21,8 +21,9 @@ int main(int argc, char* argv[])
     }
 
     // Create an application window with the following settings
-    SDL_Window* window = SDL_CreateWindow(WINDOW_TITLE, WINDOW_WIDTH, WINDOW_HEIGHT,
-                                          SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    SDL_Window* window =
+        SDL_CreateWindow(config::WINDOW_TITLE, config::WINDOW_WIDTH, config::WINDOW_HEIGHT,
+                         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
     // Check that the window was successfully created
     if (window == nullptr) {
@@ -31,21 +32,16 @@ int main(int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    bool done = false;
+    input::InputState input;
 
     // Main loop
-    while (!done) {
+    while (!input.QuitRequested()) {
+        input.BeginFrame();
+
         SDL_Event event;
 
         while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-            case SDL_EVENT_QUIT:
-            case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
-                done = true;
-                break;
-            default:
-                break;
-            }
+            input.HandleEvent(event);
         }
 
         // TODO: Do game logic, present a frame, etc.
