@@ -71,9 +71,4 @@ void InputState::HandleEvent(const SDL_Event& event) noexcept
     }
 }
 
-bool InputState::QuitRequested() const noexcept
-{
-    return m_quitRequested;
-}
-
 } // namespace islewright::input
