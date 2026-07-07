@@ -7,6 +7,9 @@ void InputState::BeginFrame() noexcept
     m_keysPressed.fill(false);
     m_keysReleased.fill(false);
 
+    m_mousePressed.fill(false);
+    m_mouseReleased.fill(false);
+
     m_mouseDeltaX = 0.0f;
     m_mouseDeltaY = 0.0f;
     m_wheelX = 0.0f;
