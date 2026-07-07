@@ -11,6 +11,8 @@ void InputState::BeginFrame() noexcept
     m_mouseDeltaY = 0.0f;
     m_wheelX = 0.0f;
     m_wheelY = 0.0f;
+
+    m_windowResized = false;
 }
 
 void InputState::HandleEvent(const SDL_Event& event) noexcept
@@ -37,7 +39,6 @@ void InputState::HandleEvent(const SDL_Event& event) noexcept
         m_mouseDeltaX += event.motion.xrel;
         m_mouseDeltaY += event.motion.yrel;
         break;
-
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EVENT_MOUSE_BUTTON_UP:
         if (event.button.button > 0 && event.button.button <= CNT_MOUSE_BUTTON_COUNT) {
@@ -52,12 +53,16 @@ void InputState::HandleEvent(const SDL_Event& event) noexcept
             }
         }
         break;
-
     case SDL_EVENT_MOUSE_WHEEL:
         m_wheelX += event.wheel.x;
         m_wheelY += event.wheel.y;
         break;
-
+    case SDL_EVENT_WINDOW_RESIZED:
+    case SDL_EVENT_WINDOW_PIXEL_SIZE_CHANGED:
+        m_windowResized = true;
+        m_windowWidth = event.window.data1;
+        m_windowHeight = event.window.data2;
+        break;
     default:
         break;
     }

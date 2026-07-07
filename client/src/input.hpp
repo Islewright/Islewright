@@ -33,6 +33,10 @@ class InputState
     float m_mouseDeltaY = 0.0f;
     float m_wheelX = 0.0f;
     float m_wheelY = 0.0f;
+
+    bool m_windowResized = false;
+    int m_windowWidth = 0;
+    int m_windowHeight = 0;
 };
 
 } // namespace islewright::input
