@@ -26,15 +26,19 @@ void InputState::HandleEvent(const SDL_Event& event) noexcept
         m_quitRequested = true;
         break;
     case SDL_EVENT_KEY_DOWN:
-        if (!event.key.repeat) {
-            m_keysPressed[event.key.scancode] = !m_keysDown[event.key.scancode];
-        }
+        if (ValidKey(event.key.scancode)) {
+            if (!event.key.repeat) {
+                m_keysPressed[event.key.scancode] = !m_keysDown[event.key.scancode];
+            }
 
-        m_keysDown[event.key.scancode] = true;
+            m_keysDown[event.key.scancode] = true;
+        }
         break;
     case SDL_EVENT_KEY_UP:
-        m_keysReleased[event.key.scancode] = m_keysDown[event.key.scancode];
-        m_keysDown[event.key.scancode] = false;
+        if (ValidKey(event.key.scancode)) {
+            m_keysReleased[event.key.scancode] = m_keysDown[event.key.scancode];
+            m_keysDown[event.key.scancode] = false;
+        }
         break;
     case SDL_EVENT_MOUSE_MOTION:
         m_mouseX = event.motion.x;
@@ -44,8 +48,8 @@ void InputState::HandleEvent(const SDL_Event& event) noexcept
         break;
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
     case SDL_EVENT_MOUSE_BUTTON_UP:
-        if (event.button.button > 0 && event.button.button <= CNT_MOUSE_BUTTON_COUNT) {
-            std::size_t index = static_cast<std::size_t>(event.button.button - 1);
+        if (ValidButton(event.button.button)) {
+            auto index = static_cast<std::size_t>(event.button.button - 1);
 
             if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
                 m_mousePressed[index] = !m_mouseDown[index];
