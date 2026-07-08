@@ -64,6 +64,13 @@ class Camera
         m_position.y += worldPosBeforeZoom.y - worldPosAfterZoom.y;
     }
 
+    // Move the camera by a delta in world coordinates
+    constexpr void MoveBy(math::Vec2 delta) noexcept
+    {
+        m_position.x += delta.x;
+        m_position.y += delta.y;
+    }
+
   private:
     math::Vec2 m_position{};
     math::Vec2 m_viewport{};
