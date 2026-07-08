@@ -15,6 +15,17 @@ class Camera
     static constexpr float ZOOM_MIN = 0.1f;
     static constexpr float ZOOM_MAX = 8.0f;
 
+    // Getters
+    constexpr math::Vec2 GetPosition() const noexcept
+    {
+        return m_position;
+    }
+
+    constexpr float Zoom() const noexcept
+    {
+        return m_zoom;
+    }
+
     // Setters
     constexpr void SetPosition(math::Vec2 position) noexcept
     {
