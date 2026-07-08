@@ -55,6 +55,17 @@ class Camera
                 .y = (screenPos.y - m_viewport.y * 0.5f) / m_zoom + m_position.y};
     }
 
+    // Zoom the camera at a specific screen position
+    constexpr void ZoomAt(math::Vec2 screenPos, float zoomDelta) noexcept
+    {
+        math::Vec2 worldPosBeforeZoom = ScreenToWorld(screenPos);
+        SetZoom(m_zoom + zoomDelta);
+        math::Vec2 worldPosAfterZoom = ScreenToWorld(screenPos);
+
+        m_position.x += worldPosBeforeZoom.x - worldPosAfterZoom.x;
+        m_position.y += worldPosBeforeZoom.y - worldPosAfterZoom.y;
+    }
+
   private:
     math::Vec2 m_position{};
     math::Vec2 m_viewport{};
