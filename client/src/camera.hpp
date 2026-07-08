@@ -5,8 +5,6 @@
 
 #include <algorithm>
 
-using namespace islewright;
-
 namespace islewright::camera {
 
 class Camera

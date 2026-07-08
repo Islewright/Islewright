@@ -1,3 +1,4 @@
+#include "camera.hpp"
 #include "config.hpp"
 #include "input.hpp"
 #include "islewright/common/version.hpp"
@@ -33,6 +34,14 @@ int main(int argc, char* argv[])
     }
 
     input::InputState input;
+    camera::Camera camera;
+
+    // Initialize the camera with the current window size
+    int windowWidth = 0, windowHeight = 0;
+    SDL_GetWindowSize(window, &windowWidth, &windowHeight);
+    camera.SetViewportSize(static_cast<float>(windowWidth), static_cast<float>(windowHeight));
+
+    Uint64 previousTicks = SDL_GetTicks();
 
     // Main loop
     while (!input.QuitRequested()) {
