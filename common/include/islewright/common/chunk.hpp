@@ -17,4 +17,4 @@ struct Chunk
 
 } // namespace islewright::common
 
-#endif // ISLEWRIGHT_COMMON_BIOME_HPP
+#endif // ISLEWRIGHT_COMMON_CHUNK_HPP
