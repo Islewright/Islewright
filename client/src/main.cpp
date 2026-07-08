@@ -53,7 +53,41 @@ int main(int argc, char* argv[])
             input.HandleEvent(event);
         }
 
-        // TODO: Do game logic, present a frame, etc.
+        // Calculate delta time
+        const Uint64 currentTicks = SDL_GetTicks();
+        const float dt = static_cast<float>(currentTicks - previousTicks) / 1000.0f;
+        previousTicks = currentTicks;
+
+        // Handle camera movement and zoom
+        if (input.WindowResized()) {
+            camera.SetViewportSize(static_cast<float>(input.WindowWidth()),
+                                   static_cast<float>(input.WindowHeight()));
+        }
+
+        // Adjust pan speed based on delta time and camera zoom level
+        const float panSpeed = 500.0f * dt / camera.Zoom();
+
+        if (input.KeyDown(SDL_SCANCODE_A) || input.KeyDown(SDL_SCANCODE_LEFT)) {
+            camera.MoveBy({.x = -panSpeed, .y = 0.0f});
+        }
+
+        if (input.KeyDown(SDL_SCANCODE_D) || input.KeyDown(SDL_SCANCODE_RIGHT)) {
+            camera.MoveBy({.x = panSpeed, .y = 0.0f});
+        }
+
+        if (input.KeyDown(SDL_SCANCODE_W) || input.KeyDown(SDL_SCANCODE_UP)) {
+            camera.MoveBy({.x = 0.0f, .y = -panSpeed});
+        }
+
+        if (input.KeyDown(SDL_SCANCODE_S) || input.KeyDown(SDL_SCANCODE_DOWN)) {
+            camera.MoveBy({.x = 0.0f, .y = panSpeed});
+        }
+
+        // Handle mouse wheel zooming
+        if (input.WheelY() != 0.0f) {
+            camera.ZoomAt({.x = input.MouseX(), .y = input.MouseY()},
+                          std::pow(1.1f, input.WheelY()));
+        }
     }
 
     // Close and destroy the window
