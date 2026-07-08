@@ -42,6 +42,19 @@ class Camera
         m_zoom = std::clamp(zoom, ZOOM_MIN, ZOOM_MAX);
     }
 
+    // Transform world coordinates to screen coordinates
+    constexpr math::Vec2 WorldToScreen(math::Vec2 worldPos) const noexcept
+    {
+        return {.x = (worldPos.x - m_position.x) * m_zoom + m_viewport.x * 0.5f,
+                .y = (worldPos.y - m_position.y) * m_zoom + m_viewport.y * 0.5f};
+    }
+
+    constexpr math::Vec2 ScreenToWorld(math::Vec2 screenPos) const noexcept
+    {
+        return {.x = (screenPos.x - m_viewport.x * 0.5f) / m_zoom + m_position.x,
+                .y = (screenPos.y - m_viewport.y * 0.5f) / m_zoom + m_position.y};
+    }
+
   private:
     math::Vec2 m_position{};
     math::Vec2 m_viewport{};
