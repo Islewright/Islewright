@@ -41,8 +41,11 @@ const Tile* World::tile_at(TileCoord tile) const noexcept
         return nullptr;
     }
     const entt::entity e = it->second;
-    const Chunk& chunk = registry_.get<Chunk>(e);
-    return &chunk.tiles[local_index(tile)];
+    const Chunk* chunk = registry_.try_get<Chunk>(e);
+    if (!chunk) {
+        return nullptr;
+    }
+    return &chunk->tiles[local_index(tile)];
 }
 
 const BiomeType* World::biome_at(TileCoord tile) const noexcept
