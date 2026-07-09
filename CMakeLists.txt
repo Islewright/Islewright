@@ -10,6 +10,8 @@ project(
 find_package(EnTT CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 
+enable_testing()
+
 add_subdirectory(common)
 add_subdirectory(client)
 add_subdirectory(server)
