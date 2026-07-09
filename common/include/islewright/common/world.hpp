@@ -28,6 +28,7 @@ class World
     explicit World(std::uint64_t seed);
 
     entt::registry& registry() noexcept;
+    const entt::registry& registry() const noexcept;
 
     entt::entity emplace_chunk(Chunk chunk);
 

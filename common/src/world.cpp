@@ -11,6 +11,11 @@ entt::registry& World::registry() noexcept
     return registry_;
 }
 
+const entt::registry& World::registry() const noexcept
+{
+    return registry_;
+}
+
 entt::entity World::emplace_chunk(Chunk chunk)
 {
     const ChunkCoord coord = chunk.coord;
