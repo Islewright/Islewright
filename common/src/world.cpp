@@ -19,6 +19,9 @@ const entt::registry& World::registry() const noexcept
 entt::entity World::emplace_chunk(Chunk chunk)
 {
     const ChunkCoord coord = chunk.coord;
+    if (auto it = index_.find(coord); it != index_.end()) {
+        return it->second;
+    }
     const entt::entity e = registry_.create();
     registry_.emplace<Chunk>(e, std::move(chunk));
     index_.insert_or_assign(coord, e);
