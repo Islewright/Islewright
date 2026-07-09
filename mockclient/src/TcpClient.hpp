@@ -100,7 +100,7 @@ class TcpClient
 
     void ReceiveLoop()
     {
-        const int BUF_SIZE = 4096;
+        const int BUF_SIZE = 1024;
         char buffer[BUF_SIZE];
 
         while (isRunning_)
@@ -111,7 +111,7 @@ class TcpClient
             if (recv_bytes > 0)
             {
                 buffer[recv_bytes] = '\0'; // 문자열 끝 처리
-                std::cout << std::format("\n[Server]: {0}\n", buffer);
+                std::cout << std::format("[Server]: {0}\n", buffer);
             }
             else if (recv_bytes == 0)
             {

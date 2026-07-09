@@ -1,6 +1,6 @@
 #include "islewright/common/version.hpp"
 
-#include "server.hpp"
+#include "IslewrighterServer.hpp"
 #include <iostream>
 
 #define PORT 9000
