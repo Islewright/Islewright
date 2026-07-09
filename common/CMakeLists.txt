@@ -16,3 +16,7 @@ target_link_libraries(islewright-common
     PUBLIC
         EnTT::EnTT
 )
+
+add_executable(islewright-common-tests tests/world_test.cpp)
+target_link_libraries(islewright-common-tests PRIVATE Islewright::common)
+add_test(NAME common-tests COMMAND islewright-common-tests)
