@@ -15,7 +15,7 @@ add_subdirectory(client)
 add_subdirectory(server)
 
 # mock client flag
-option(MOCK_CLIENT "mock client build" ON)
+option(MOCK_CLIENT "mock client build" OFF)
 
 if(MOCK_CLIENT)
     add_subdirectory(mockclient)
