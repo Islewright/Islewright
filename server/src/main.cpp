@@ -1,6 +1,6 @@
 #include "islewright/common/version.hpp"
 
-#include "IslewrighterServer.hpp"
+#include "IslewrightServer.hpp"
 #include <iostream>
 
 #define PORT 9000
@@ -10,7 +10,7 @@ int main()
 	std::cout << islewright::common::project_name() << " server "
 		<< islewright::common::project_version() << '\n';
 
-	IslewrighterServer islewrighterServer;
+	IslewrightServer islewrighterServer;
 	islewrighterServer.BindAndListen(PORT);
 	islewrighterServer.StartServer();
 	

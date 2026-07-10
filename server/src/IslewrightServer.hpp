@@ -10,17 +10,18 @@
 #include <format>
 #include <stdexcept> 
 
-class IslewrighterServer{
+class IslewrightServer{
     public:
-    IslewrighterServer()
+    IslewrightServer()
     {
-        if (WSAStartup(MAKEWORD(2,2), &wsa_) != 0)
+        WSAData wsa;
+        if (WSAStartup(MAKEWORD(2,2), &wsa) != 0)
         {
             throw std::runtime_error("WSAStartup failed");
         }
     }
 
-    ~IslewrighterServer()
+    ~IslewrightServer()
     {
         WSACleanup();
     }
@@ -29,8 +30,8 @@ class IslewrighterServer{
     {
         port_ = u16Port;
 
-        listenSocket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if(listenSocket_ == INVALID_SOCKET)
+        m_listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if(m_listenSocket == INVALID_SOCKET)
         {
             std::cout << "[ERROR] socket() failed\n";
             return false;
@@ -41,7 +42,7 @@ class IslewrighterServer{
         serverAddr.sin_port = htons(port_);
         serverAddr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
 
-        int ret = bind(listenSocket_, (struct sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
+        int ret = bind(m_listenSocket, (struct sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
         if(ret == SOCKET_ERROR)
         {
             
@@ -51,7 +52,7 @@ class IslewrighterServer{
             return false;
         }
 
-        ret = listen(listenSocket_, 5);
+        ret = listen(m_listenSocket, 5);
         if(ret == SOCKET_ERROR)
         {
             
@@ -69,8 +70,8 @@ class IslewrighterServer{
     {
         CreateClient(clientCount);
 
-        isAccepterRun_ = true;
-        accepterThread_ = std::thread( [this]() { AccepterThread(); } );
+        m_isAccepterRun = true;
+        m_accepterThread = std::thread( [this]() { AccepterThread(); } );
         
         std::cout << "[SYSTEM] AcceptThread created\n";
         std::cout << "[SYSTEM] Server stated\n";
@@ -78,23 +79,23 @@ class IslewrighterServer{
 
     void EndServer()
     {
-        isAccepterRun_ = false;
+        m_isAccepterRun = false;
 
         CloseSocket();
         
-        if(accepterThread_.joinable())
+        if(m_accepterThread.joinable())
         {
-            accepterThread_.join();
+            m_accepterThread.join();
         }
 
-        for(int i = 0; i < maxClientCount_; i++)
+        for(int i = 0; i < m_maxClientCount; i++)
         {
-            if(clientInfos_[i].socket_ == INVALID_SOCKET) continue;
-            stClientInfo* client = &clientInfos_[i];
-            closesocket(client->socket_);
-            if(client->recvThread_.joinable())
+            if(m_clientInfos[i].socket == INVALID_SOCKET) continue;
+            stClientInfo* client = &m_clientInfos[i];
+            closesocket(client->socket);
+            if(client->recvThread.joinable())
             {
-                client->recvThread_.join();
+                client->recvThread.join();
             }
         }
     }
@@ -102,30 +103,30 @@ class IslewrighterServer{
     private:
     void CreateClient(UINT32 clientCount)
     {
-        maxClientCount_ = clientCount;
+        m_maxClientCount = clientCount;
         for(int i = 0; i < clientCount; i++)
         {
             stClientInfo newClient;
-            newClient.clientIndex_ = i;
-            clientInfos_.push_back(std::move(newClient));
+            newClient.clientIndex = i;
+            m_clientInfos.push_back(std::move(newClient));
         }
     }
 
     stClientInfo* GetEmptyClient()
     {
-        for(auto & client: clientInfos_)
+        for(auto & client: m_clientInfos)
         {
-            if(client.socket_ == INVALID_SOCKET) return &client;
+            if(client.socket == INVALID_SOCKET) return &client;
         }
         return nullptr;
     }
 
     void AccepterThread()
     {
-        while(isAccepterRun_)
+        while(m_isAccepterRun)
         {
             SOCKADDR_IN clientAddr;
-            SOCKET acceptedSocket = accept(listenSocket_, (struct sockaddr*) &clientAddr, &addrlen);
+            SOCKET acceptedSocket = accept(m_listenSocket, (struct sockaddr*) &clientAddr, &m_addrlen);
             if(acceptedSocket == INVALID_SOCKET)
             {
                 // TODO: Must add error handle routines like Shutdown server or ReIntialize listening socket....
@@ -142,9 +143,9 @@ class IslewrighterServer{
                 closesocket(acceptedSocket);
                 continue;
             }
-            client->socket_ = acceptedSocket;
-            client->clientAddr_ = std::move(clientAddr);
-            client->recvThread_ = std::thread(&IslewrighterServer::RecvThread, this, client);
+            client->socket = acceptedSocket;
+            client->clientAddr = std::move(clientAddr);
+            client->recvThread = std::thread(&IslewrightServer::RecvThread, this, client);
         }
     }
 
@@ -153,35 +154,35 @@ class IslewrighterServer{
         char buf[MAX_BUF_SIZE];
         while(true)
         {
-            int transferredSize = recv(client->socket_, buf, MAX_BUF_SIZE, 0);
+            int transferredSize = recv(client->socket, buf, MAX_BUF_SIZE, 0);
             if(transferredSize == 0)
             {
-                std::string msg = std::format("[SYSTEM] client {0} disconnected\n", client->clientIndex_);
+                std::string msg = std::format("[SYSTEM] client {0} disconnected\n", client->clientIndex);
                 std::cout << msg;
                 break;
             }
             else if(transferredSize < 0)
             {
-                std::string msg = std::format("[ERROR] client {0} recv() failed: {1}\n", client->clientIndex_, WSAGetLastError());
+                std::string msg = std::format("[ERROR] client {0} recv() failed: {1}\n", client->clientIndex, WSAGetLastError());
                 std::cout << msg;
                 break;
             }
 
             buf[transferredSize] = '\0';
-            std::string msg = std::format("[RECV][Client {0}] {1}, {2}bytes\n", client->clientIndex_, buf, transferredSize);
+            std::string msg = std::format("[RECV][Client {0}] {1}, {2}bytes\n", client->clientIndex, buf, transferredSize);
             std::cout << msg;
 
             // NOTE: Echo Test
-            send(client->socket_, buf, transferredSize, 0);
+            send(client->socket, buf, transferredSize, 0);
             
             ZeroMemory(buf, sizeof(buf));
         }
 
-        std::string msg = std::format("[RECV][Client {0}] Recv thread ended\n", client->clientIndex_);
+        std::string msg = std::format("[RECV][Client {0}] Recv thread ended\n", client->clientIndex);
         std::cout << msg;
 
-        closesocket(client->socket_);
-        client->socket_ = INVALID_SOCKET;
+        closesocket(client->socket);
+        client->socket = INVALID_SOCKET;
     }
 
     bool Send(SOCKET socket, const char* pData, int transferredSize)
@@ -206,29 +207,27 @@ class IslewrighterServer{
     void CloseSocket()
     {
         // NOTE: Must consider about graceful close.
-        closesocket(listenSocket_);
-        listenSocket_ = INVALID_SOCKET;
+        closesocket(m_listenSocket);
+        m_listenSocket = INVALID_SOCKET;
     }
 
-    WSAData wsa_;
-
-    SOCKET listenSocket_ = INVALID_SOCKET;
+    SOCKET m_listenSocket = INVALID_SOCKET;
 
     UINT16 port_ = 9000;
 
     SOCKADDR_IN serverAddr;
 
-    int addrlen = sizeof(SOCKADDR_IN);  
+    int m_addrlen = sizeof(SOCKADDR_IN);  
 
-    bool isAccepterRun_ = false;
+    bool m_isAccepterRun = false;
 
-    std::thread accepterThread_;
+    std::thread m_accepterThread;
 
-    bool isSocketHandlerRun_ = false;
+    bool m_isSocketHandlerRun = false;
 
-    UINT64 maxClientCount_ = 0;
+    UINT64 m_maxClientCount = 0;
 
-    std::vector<stClientInfo> clientInfos_;
+    std::vector<stClientInfo> m_clientInfos;
     
 };
 
