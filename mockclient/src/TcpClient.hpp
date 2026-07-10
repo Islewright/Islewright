@@ -16,10 +16,23 @@ class TcpClient
     public:
     TcpClient() = default;
 
-    ~TcpClient() = default;
+    ~TcpClient()
+    {
+        Stop();
+        
+        WSACleanup();
+    }
     
     bool Init(UINT16 port)
     {
+        
+        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        {   
+            std::string msg = std::format("[ERROR] WSAStartup() failed: {0}\n", WSAGetLastError());
+            std::cout << msg;
+            return false;
+        }
+
         socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if(socket_ == INVALID_SOCKET)   
         {
@@ -39,11 +52,19 @@ class TcpClient
         memset(&serverAddr, 0x00, sizeof(SOCKADDR_IN));
         serverAddr.sin_family = AF_INET;
         ret = InetPtonA(AF_INET, serverIP.c_str(), &serverAddr.sin_addr);
+        if(ret != 1)
+        {
+            std::string msg = std::format("[ERROR] connect() failed: {0}\n", WSAGetLastError());
+            return false;
+        }
+
         serverAddr.sin_port = htons(port_);
         ret = connect(socket_, (struct sockaddr *)&serverAddr, sizeof(SOCKADDR_IN));
         if(ret == SOCKET_ERROR)
         {
             std::string msg = std::format("[ERROR] connect() failed: {0}\n", WSAGetLastError());
+            closesocket(socket_);
+            socket_ = INVALID_SOCKET;
             std::cout << msg;
             return false;
         }
@@ -117,6 +138,7 @@ class TcpClient
             {
                 // recv가 0을 반환하면 서버가 정상적으로 연결을 종료한 것임
                 std::cout << "[INFO] Server disconnected.\n";
+                isRunning_ = false;
                 break;
             }
             else
@@ -127,10 +149,14 @@ class TcpClient
                 {
                     std::cout << std::format("[ERROR] recv() failed: {0}\n", err);
                 }
+                isRunning_ = false;
                 break;
             }
         }
     }
+
+    
+    WSADATA wsaData;
 
     SOCKET socket_ = INVALID_SOCKET;
 

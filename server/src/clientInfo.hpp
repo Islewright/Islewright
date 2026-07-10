@@ -10,6 +10,7 @@ struct stClientInfo
 {
     SOCKET socket_ = INVALID_SOCKET;
     UINT64 clientIndex_ = -1;
+    SOCKADDR_IN clientAddr_;
     std::thread recvThread_;
 };
 
