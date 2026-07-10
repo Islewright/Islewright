@@ -93,6 +93,12 @@ jobs:
         if: ${{ env.SONAR_TOKEN != '' }}
         run: cmake --build build --parallel
 
+      - name: Test and collect coverage
+        if: ${{ env.SONAR_TOKEN != '' }}
+        run: |
+          ctest --test-dir build --output-on-failure
+          gcovr --sonarqube coverage.xml
+
       - name: SonarCloud Scan
         if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@v8
