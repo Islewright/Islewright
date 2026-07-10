@@ -1,6 +1,6 @@
 add_executable(islewright-server
     src/main.cpp
-    src/IslewrighterServer.hpp
+    src/IslewrightServer.hpp
     src/clientInfo.hpp
 )
 

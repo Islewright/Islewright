@@ -25,23 +25,25 @@ class TcpClient
     
     bool Init(UINT16 port)
     {
-        
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+        WSAData wsa;
+        if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
         {   
             std::string msg = std::format("[ERROR] WSAStartup() failed: {0}\n", WSAGetLastError());
             std::cout << msg;
+
             return false;
         }
 
-        socket_ = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if(socket_ == INVALID_SOCKET)   
+        m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+        if(m_socket == INVALID_SOCKET)   
         {
             std::string msg = std::format("[ERROR] socket() failed: {0}\n", WSAGetLastError());
             std::cout << msg;
+
             return false;
         }
         
-        port_ = port;
+        m_port = port;
         
         return true;
     }
@@ -49,36 +51,40 @@ class TcpClient
     bool Connect(const std::string serverIP = "127.0.0.1")
     {
         int ret;
-        memset(&serverAddr, 0x00, sizeof(SOCKADDR_IN));
-        serverAddr.sin_family = AF_INET;
-        ret = InetPtonA(AF_INET, serverIP.c_str(), &serverAddr.sin_addr);
+
+        memset(&m_serverAddr, 0x00, sizeof(SOCKADDR_IN));
+        m_serverAddr.sin_family = AF_INET;
+        ret = InetPtonA(AF_INET, serverIP.c_str(), &m_serverAddr.sin_addr);
         if(ret != 1)
         {
             std::string msg = std::format("[ERROR] connect() failed: {0}\n", WSAGetLastError());
             return false;
         }
+        m_serverAddr.sin_port = htons(m_port);
 
-        serverAddr.sin_port = htons(port_);
-        ret = connect(socket_, (struct sockaddr *)&serverAddr, sizeof(SOCKADDR_IN));
+        ret = connect(m_socket, (struct sockaddr *)&m_serverAddr, sizeof(SOCKADDR_IN));
         if(ret == SOCKET_ERROR)
         {
             std::string msg = std::format("[ERROR] connect() failed: {0}\n", WSAGetLastError());
-            closesocket(socket_);
-            socket_ = INVALID_SOCKET;
             std::cout << msg;
+
+            closesocket(m_socket);
+            m_socket = INVALID_SOCKET;
+
             return false;
         }
 
-        std::cout << "[SYSTEM] Server connected success\n";
+        std::cout << "[SYSTEM] Server connection success\n";
         
-        isRunning_ = true;
-        recvThread_ = std::thread([this]() {ReceiveLoop();});
+        m_isRunning = true;
+        m_recvThread = std::thread([this]() {ReceiveLoop();});
+
         return true;
     }
 
     bool SendMessage(const std::string& message)
     {
-        if (socket_ == INVALID_SOCKET || !isRunning_) return false;
+        if (m_socket == INVALID_SOCKET || !m_isRunning) return false;
 
         int total_sent = 0;
         int msg_len = static_cast<int>(message.length());
@@ -86,7 +92,7 @@ class TcpClient
         // TCP 특성상 데이터가 한 번에 다 안 갈 수도 있으므로 루프 처리
         while (total_sent < msg_len)
         {
-            int sent = send(socket_, message.c_str() + total_sent, msg_len - total_sent, 0);
+            int sent = send(m_socket, message.c_str() + total_sent, msg_len - total_sent, 0);
             if (sent == SOCKET_ERROR)
             {
                 std::cout << std::format("[ERROR] send() failed: {0}\n", WSAGetLastError());
@@ -100,19 +106,19 @@ class TcpClient
 
     void Stop()
     {
-        isRunning_ = false;
+        m_isRunning = false;
 
         // 소켓을 닫아 무한 대기 중인 recv() 블로킹을 깨웁니다.
-        if (socket_ != INVALID_SOCKET)
+        if (m_socket != INVALID_SOCKET)
         {
-            closesocket(socket_);
-            socket_ = INVALID_SOCKET;
+            closesocket(m_socket);
+            m_socket = INVALID_SOCKET;
         }
 
         // 수신 스레드가 종료될 때까지 대기
-        if (recvThread_.joinable())
+        if (m_recvThread.joinable())
         {
-            recvThread_.join();
+            m_recvThread.join();
         }
     }
 
@@ -124,10 +130,10 @@ class TcpClient
         const int BUF_SIZE = 1024;
         char buffer[BUF_SIZE];
 
-        while (isRunning_)
+        while (m_isRunning)
         {
             // 서버로부터 데이터 수신 대기 (블로킹 상태)
-            int recv_bytes = recv(socket_, buffer, BUF_SIZE - 1, 0);
+            int recv_bytes = recv(m_socket, buffer, BUF_SIZE - 1, 0);
 
             if (recv_bytes > 0)
             {
@@ -138,35 +144,32 @@ class TcpClient
             {
                 // recv가 0을 반환하면 서버가 정상적으로 연결을 종료한 것임
                 std::cout << "[INFO] Server disconnected.\n";
-                isRunning_ = false;
+                m_isRunning = false;
                 break;
             }
             else
             {
                 // 소켓이 외부(Stop 함수 등)에서 닫히면 WSAEINTR(10004) 등이 발생할 수 있음
                 int err = WSAGetLastError();
-                if (isRunning_ && err != WSAEINTR)
+                if (m_isRunning && err != WSAEINTR)
                 {
                     std::cout << std::format("[ERROR] recv() failed: {0}\n", err);
                 }
-                isRunning_ = false;
+                m_isRunning = false;
                 break;
             }
         }
     }
 
-    
-    WSADATA wsaData;
+    SOCKET m_socket = INVALID_SOCKET;
 
-    SOCKET socket_ = INVALID_SOCKET;
+    UINT16 m_port;
 
-    UINT16 port_;
+    SOCKADDR_IN m_serverAddr;
 
-    SOCKADDR_IN serverAddr;
+    bool m_isRunning = false;
 
-    bool isRunning_ = false;
-
-    std::thread recvThread_;
+    std::thread m_recvThread;
 };
 
 #endif
