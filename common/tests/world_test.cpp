@@ -38,7 +38,7 @@ int main()
     const Tile* tn = w.tile_at(TileCoord{-1, -1});
     assert(tn != nullptr && tn->id == TileId::Stone);
 
-    // const registry() overload
+    // const correctness
     const World& cw = w;
     assert(&cw.registry() == &w.registry());
 
