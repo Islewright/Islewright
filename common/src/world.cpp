@@ -4,59 +4,62 @@
 
 namespace islewright::common {
 
-World::World(std::uint64_t seed) : seed_(seed) {}
+World::World(std::uint64_t seed) : m_seed(seed) {}
 
-entt::registry& World::registry() noexcept
+entt::registry& World::Registry() noexcept
 {
-    return registry_;
+    return m_registry;
 }
 
-const entt::registry& World::registry() const noexcept
+const entt::registry& World::Registry() const noexcept
 {
-    return registry_;
+    return m_registry;
 }
 
-entt::entity World::emplace_chunk(Chunk chunk)
+entt::entity World::EmplaceChunk(Chunk chunk)
 {
     const ChunkCoord coord = chunk.coord;
-    if (auto it = index_.find(coord); it != index_.end()) {
+    if (auto it = m_index.find(coord); it != m_index.end()) {
         return it->second;
     }
-    const entt::entity e = registry_.create();
-    registry_.emplace<Chunk>(e, std::move(chunk));
-    index_.insert_or_assign(coord, e);
+
+    const entt::entity e = m_registry.create();
+    m_registry.emplace<Chunk>(e, std::move(chunk));
+    m_index.insert_or_assign(coord, e);
     return e;
 }
 
-bool World::has_chunk(ChunkCoord coord) const noexcept
+bool World::HasChunk(ChunkCoord coord) const noexcept
 {
-    return index_.contains(coord);
+    return m_index.contains(coord);
 }
 
-const Tile* World::tile_at(TileCoord tile) const noexcept
+const Tile* World::TileAt(TileCoord tile) const noexcept
 {
-    const ChunkCoord chunk_coord = to_chunk(tile);
-    const auto it = index_.find(chunk_coord);
-    if (it == index_.end()) {
+    const ChunkCoord chunkCoord = to_chunk(tile);
+    const auto it = m_index.find(chunkCoord);
+    if (it == m_index.end()) {
         return nullptr;
     }
+
     const entt::entity e = it->second;
-    const Chunk* chunk = registry_.try_get<Chunk>(e);
+    const Chunk* chunk = m_registry.try_get<Chunk>(e);
     if (!chunk) {
         return nullptr;
     }
+
     return &chunk->tiles[local_index(tile)];
 }
 
-const BiomeType* World::biome_at(TileCoord tile) const noexcept
+const BiomeType* World::BiomeAt(TileCoord tile) const noexcept
 {
-    const Tile* t = tile_at(tile);
+    const Tile* t = TileAt(tile);
     return t ? &t->biome : nullptr;
 }
 
-std::uint64_t World::seed() const noexcept
+std::uint64_t World::Seed() const noexcept
 {
-    return seed_;
+    return m_seed;
 }
 
 } // namespace islewright::common

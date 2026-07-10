@@ -27,22 +27,22 @@ class World
   public:
     explicit World(std::uint64_t seed);
 
-    entt::registry& registry() noexcept;
-    const entt::registry& registry() const noexcept;
+    entt::registry& Registry() noexcept;
+    const entt::registry& Registry() const noexcept;
 
-    entt::entity emplace_chunk(Chunk chunk);
+    entt::entity EmplaceChunk(Chunk chunk);
 
-    bool has_chunk(ChunkCoord coord) const noexcept;
-    const Tile* tile_at(TileCoord tile) const noexcept;
-    const BiomeType* biome_at(TileCoord tile) const noexcept;
-    std::uint64_t seed() const noexcept;
+    bool HasChunk(ChunkCoord coord) const noexcept;
+    const Tile* TileAt(TileCoord tile) const noexcept;
+    const BiomeType* BiomeAt(TileCoord tile) const noexcept;
+    std::uint64_t Seed() const noexcept;
 
   private:
     using ChunkIndex = entt::dense_map<ChunkCoord, entt::entity, ChunkCoordHash>;
 
-    std::uint64_t seed_;
-    ChunkIndex index_;
-    entt::registry registry_;
+    std::uint64_t m_seed;
+    ChunkIndex m_index;
+    entt::registry m_registry;
 };
 
 } // namespace islewright::common
