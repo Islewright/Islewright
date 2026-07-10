@@ -56,6 +56,7 @@ jobs:
             libtool \
             pkg-config \
             ninja-build \
+            gcovr \
             libasound2-dev \
             libdbus-1-dev \
             libdecor-0-dev \
@@ -83,7 +84,8 @@ jobs:
         run: |
           export VCPKG_BINARY_SOURCES="clear;files,${{ github.workspace }}/vcpkg-cache,readwrite"
           cmake -S . -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_CXX_FLAGS=--coverage \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
             -DCMAKE_TOOLCHAIN_FILE="$CMAKE_TOOLCHAIN_FILE"
 
