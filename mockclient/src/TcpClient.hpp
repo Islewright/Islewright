@@ -1,5 +1,5 @@
-﻿#ifndef TCPCLIENT_H
-#define TCPCLIENT_H
+﻿#ifndef TCPCLIENT_HPP
+#define TCPCLIENT_HPP
 
 #pragma comment(lib, "ws2_32.lib")
 

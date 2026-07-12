@@ -10,9 +10,9 @@ int main()
 	std::cout << islewright::common::project_name() << " server "
 		<< islewright::common::project_version() << '\n';
 
-	IslewrightServer islewrighterServer;
-	islewrighterServer.BindAndListen(PORT);
-	islewrighterServer.StartServer();
+	IslewrightServer islewrightServer;
+	islewrightServer.BindAndListen(PORT);
+	islewrightServer.StartServer();
 	
 	// Blocking for main thread termination
 	std::string input;
@@ -27,7 +27,7 @@ int main()
 		std::cout << "Unknown command. Type 'quit' to terminate.\n";
 	}
 
-	islewrighterServer.EndServer();
+	islewrightServer.EndServer();
 
 	
 	std::cout << "Server Terminated. Type any word to quit\n";

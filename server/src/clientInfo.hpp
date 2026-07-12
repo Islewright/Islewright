@@ -1,5 +1,5 @@
-#ifndef CLIENTINFO_H
-#define CLIENTINFO_H
+#ifndef CLIENTINFO_HPP
+#define CLIENTINFO_HPP
 
 #include <WinSock2.h>
 #include <thread>

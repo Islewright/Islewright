@@ -1,5 +1,5 @@
-﻿#ifndef ISLEWRIGHTERSERVER_H
-#define ISLEWRIGHTERSERVER_H
+﻿#ifndef ISLEWRIGHTSERVER_HPP
+#define ISLEWRIGHTSERVER_HPP
 
 #include "clientInfo.hpp"
 #include <vector>
