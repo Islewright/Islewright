@@ -12,11 +12,16 @@ find_package(SDL3 CONFIG REQUIRED)
 
 add_subdirectory(common)
 add_subdirectory(client)
-add_subdirectory(server)
+
+if(WIN32)
+    add_subdirectory(server)
+else()
+    message(STATUS "Skipping server on non-Windows platform")
+endif()
 
 # mock client flag
 option(MOCK_CLIENT "mock client build" ON)
 
-if(MOCK_CLIENT)
+if(MOCK_CLIENT AND WIN32)
     add_subdirectory(mockclient)
 endif()
