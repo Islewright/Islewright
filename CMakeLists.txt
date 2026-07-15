@@ -12,11 +12,14 @@ find_package(SDL3 CONFIG REQUIRED)
 
 add_subdirectory(common)
 add_subdirectory(client)
-add_subdirectory(server)
 
-# mock client flag
-option(MOCK_CLIENT "mock client build" ON)
+if(WIN32)
+    add_subdirectory(server)
 
-if(MOCK_CLIENT)
-    add_subdirectory(mockclient)
+    # mock client flag
+    option(MOCK_CLIENT "mock client build" ON)
+
+    if(MOCK_CLIENT)
+        add_subdirectory(mockclient)
+    endif()
 endif()
