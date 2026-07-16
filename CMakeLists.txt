@@ -15,13 +15,11 @@ add_subdirectory(client)
 
 if(WIN32)
     add_subdirectory(server)
-else()
-    message(STATUS "Skipping server on non-Windows platform")
-endif()
 
-# mock client flag
-option(MOCK_CLIENT "mock client build" ON)
+    # mock client flag
+    option(MOCK_CLIENT "mock client build" ON)
 
-if(MOCK_CLIENT AND WIN32)
-    add_subdirectory(mockclient)
+    if(MOCK_CLIENT)
+        add_subdirectory(mockclient)
+    endif()
 endif()
