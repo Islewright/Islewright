@@ -7,23 +7,27 @@
 int main(int argc, char* argv[])
 {
     TcpClient client;
-    if (!client.Init(PORT)) // 서버 포트 지정
-    {
+    
+    if (!client.Init(PORT)) {
         return -1;
     }
-    if (!client.Connect("127.0.0.1"))
-    {
+    
+    if (!client.Connect("127.0.0.1")) {
         return -1;
     }
     
     std::string input;
-    while (true)
-    {
+    
+    while (true) {
         std::getline(std::cin, input);
-        if (input == "exit") break;
+        
+        if (input == "exit") {
+            break;
+        }
 
         client.SendMessage(input);
     }
+    
     client.Stop();
 
     return 0;
