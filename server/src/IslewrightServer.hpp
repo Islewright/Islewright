@@ -2,12 +2,14 @@
 #define ISLEWRIGHTSERVER_HPP
 
 #include "clientInfo.hpp"
-#include <vector>
-#include <thread> 
+
 #include <WinSock2.h>
 #include <windows.h>
+
 #include <iostream>
 #include <format>
+#include <vector>
+#include <thread> 
 #include <stdexcept> 
 
 class IslewrightServer{
@@ -188,6 +190,7 @@ class IslewrightServer{
     bool Send(SOCKET socket, const char* pData, int transferredSize)
     {
         if(socket == INVALID_SOCKET) return false;
+
         int totalSent = 0;
         while(totalSent < transferredSize)
         {
@@ -196,6 +199,7 @@ class IslewrightServer{
             {
                 std::string msg = std::format("[ERROR] send() failed: {0}]n", WSAGetLastError());
                 std::cout << msg;
+
                 return false;
             }
             totalSent += ret;
@@ -212,19 +216,14 @@ class IslewrightServer{
     }
 
     SOCKET m_listenSocket = INVALID_SOCKET;
-
     UINT16 port_ = 9000;
-
     SOCKADDR_IN serverAddr;
-
     int m_addrlen = sizeof(SOCKADDR_IN);  
 
     bool m_isAccepterRun = false;
-
     std::thread m_accepterThread;
 
     bool m_isSocketHandlerRun = false;
-
     UINT64 m_maxClientCount = 0;
 
     std::vector<stClientInfo> m_clientInfos;

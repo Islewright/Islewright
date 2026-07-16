@@ -1,6 +1,7 @@
 #include "islewright/common/version.hpp"
 
 #include "IslewrightServer.hpp"
+
 #include <iostream>
 
 #define PORT 9000
@@ -29,7 +30,6 @@ int main()
 
 	islewrightServer.EndServer();
 
-	
 	std::cout << "Server Terminated. Type any word to quit\n";
 	std::cin >> input;
 
