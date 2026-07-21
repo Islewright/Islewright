@@ -1,7 +1,7 @@
 add_executable(islewright-client
     src/input.cpp
     src/main.cpp
-    src/TCPConnector.hpp
+    src/tcpconnector.hpp
  )
 
 target_link_libraries(islewright-client
