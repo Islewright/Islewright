@@ -27,6 +27,8 @@ class TcpConnector
         delete[] m_sendBuffer;
 
         WSACleanup();
+        
+        OnDisConnect();
     }
 
     // Getters
@@ -80,6 +82,8 @@ class TcpConnector
             return false;
         }
 
+        OnConnect();
+
         return true;
     }
 
@@ -124,6 +128,12 @@ class TcpConnector
         return true;
     }
 
+    virtual void OnConnect() {}
+
+    virtual void OnReceive(char* message, int len) {}
+
+    virtual void OnDisConnect() {}
+
   private:
     void CloseSocket()
     {
@@ -145,8 +155,7 @@ class TcpConnector
             
             if (ret > 0) 
             {
-                m_recvBuffer[ret] = '\0';
-                std::cout << "[RECV] " << m_recvBuffer << "\n";
+                OnReceive(m_recvBuffer, ret);
             }
             else if (ret == 0) 
             {
