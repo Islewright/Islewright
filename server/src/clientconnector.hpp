@@ -17,7 +17,7 @@ using ClientInfo = islewright::clientinfo::ClientInfo;
 class ClientConnector
 {
   public:
-    ClientConnector(const USHORT port = 9000) : m_port(port)
+    ClientConnector(USHORT port = 9000) : m_port(port)
     {
         WSADATA wsaData;
         int ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
@@ -40,13 +40,13 @@ class ClientConnector
     }
 
     // Getters
-    USHORT GetPort()
+    USHORT GetPort() const noexcept
     {
         return m_port;
     }
 
     // Setters
-    void SetPort(USHORT port)
+    void SetPort(USHORT port) noexcept
     {
         m_port = port;
     }
@@ -66,7 +66,8 @@ class ClientConnector
         serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
         serverAddr.sin_port = htons(m_port);
 
-        int ret = bind(m_listenSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
+        int ret =
+            bind(m_listenSocket, reinterpret_cast<SOCKADDR*>(&serverAddr), sizeof(serverAddr));
 
         if (ret == SOCKET_ERROR) {
             std::cout << "[ERROR] bind() failed:" << WSAGetLastError() << "\n";
@@ -96,7 +97,7 @@ class ClientConnector
         int clientAddrSize = sizeof(clientAddr);
 
         SOCKET clientSocket =
-            accept(m_listenSocket, (struct sockaddr*)&clientAddr, &clientAddrSize);
+            accept(m_listenSocket, reinterpret_cast<SOCKADDR*>(&clientAddr), &clientAddrSize);
 
         if (clientSocket == INVALID_SOCKET) {
             std::cout << "[ERROR] accept() failed:" << WSAGetLastError() << "\n";
@@ -138,7 +139,7 @@ class ClientConnector
     bool Send(const char* msg, const int len)
     {
         if (msg == nullptr || len <= 0 || m_clientInfo == nullptr ||
-            len > ClientInfo::m_bufferSize || m_isNetworking == false) {
+            len > ClientInfo::BUFFER_SIZE || m_isNetworking == false) {
             return false;
         }
 
@@ -190,7 +191,7 @@ class ClientConnector
     {
         while (m_isNetworking) {
             int ret = recv(m_clientInfo->m_socket, m_clientInfo->m_recvBuffer,
-                           ClientInfo::m_bufferSize, 0);
+                           ClientInfo::BUFFER_SIZE, 0);
 
             if (ret > 0) {
                 OnReceive(m_clientInfo->m_recvBuffer, ret);

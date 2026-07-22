@@ -22,8 +22,8 @@ class TcpConnector
                                      std::to_string(ret));
         }
 
-        m_recvBuffer = new char[m_bufferSize + 1];
-        m_sendBuffer = new char[m_bufferSize + 1];
+        m_recvBuffer = new char[BUFFER_SIZE + 1];
+        m_sendBuffer = new char[BUFFER_SIZE + 1];
     }
 
     ~TcpConnector()
@@ -107,7 +107,7 @@ class TcpConnector
 
     bool Send(const char* msg, const int len)
     {
-        if (msg == nullptr || len <= 0 || len > m_bufferSize || m_isNetworking == false) {
+        if (msg == nullptr || len <= 0 || len > BUFFER_SIZE || m_isNetworking == false) {
             return false;
         }
 
@@ -140,11 +140,10 @@ class TcpConnector
         m_recvThread = std::thread([this]() { Recv(); });
     }
 
-    // TODO: Create callback method of received data
     void Recv()
     {
         while (m_isNetworking) {
-            int ret = recv(m_socket, m_recvBuffer, m_bufferSize, 0);
+            int ret = recv(m_socket, m_recvBuffer, BUFFER_SIZE, 0);
 
             if (ret > 0) {
                 OnReceive(m_recvBuffer, ret);
@@ -166,7 +165,7 @@ class TcpConnector
 
     std::thread m_recvThread;
 
-    static constexpr int m_bufferSize = 1024;
+    static constexpr int BUFFER_SIZE = 1024;
     char* m_recvBuffer = nullptr;
     char* m_sendBuffer = nullptr;
 };
