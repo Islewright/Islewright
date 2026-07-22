@@ -15,8 +15,15 @@ class TcpConnector
   public:
     TcpConnector(const std::string hostAddr = "127.0.0.1", const USHORT port = 9000) : m_serverAddr(hostAddr), m_port(port) 
     {
-        m_recvBuffer = new char[m_recvBufferSize + 1];
-        m_sendBuffer = new char[m_sendBufferSize + 1];
+        WSADATA wsaData;
+        int ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
+        if (ret != 0) 
+        {
+            throw std::runtime_error("[ERROR] WSAStartup failed with error: " + std::to_string(ret));
+        }
+
+        m_recvBuffer = new char[m_bufferSize + 1];
+        m_sendBuffer = new char[m_bufferSize + 1];
     }
 
     ~TcpConnector()
@@ -56,13 +63,6 @@ class TcpConnector
     // Connect to Server
     bool Connect()
     {
-        WSADATA wsaData;
-
-        if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) 
-        {
-            return false;
-        }
-
         m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
         if (m_socket == INVALID_SOCKET) 
         {
@@ -111,7 +111,7 @@ class TcpConnector
 
     bool Send(const char* msg, const int len)
     {
-        if (msg == nullptr || len <= 0 || len > m_sendBufferSize || m_isNetworking == false) 
+        if (msg == nullptr || len <= 0 || len > m_bufferSize || m_isNetworking == false) 
         {
             return false;
         }
@@ -151,7 +151,7 @@ class TcpConnector
     {
         while (m_isNetworking)
         {
-            int ret = recv(m_socket, m_recvBuffer, m_recvBufferSize, 0);
+            int ret = recv(m_socket, m_recvBuffer, m_bufferSize, 0);
             
             if (ret > 0) 
             {
@@ -177,11 +177,10 @@ class TcpConnector
     bool m_isNetworking = false;
 
     std::thread m_recvThread;
-    char* m_recvBuffer;
-    int m_recvBufferSize = 1024;
 
-    char* m_sendBuffer;
-    int m_sendBufferSize = 1024;
+    static constexpr int m_bufferSize = 1024;
+    char* m_recvBuffer = nullptr;
+    char* m_sendBuffer = nullptr;
 };
 
 } // namespace islewright::tcpconnector
