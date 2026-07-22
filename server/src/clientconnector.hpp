@@ -3,9 +3,8 @@
 
 #include "clientinfo.hpp"
 
-#include <WinSock2.h>
 #include <WS2tcpip.h>
-
+#include <WinSock2.h>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -23,9 +22,9 @@ class ClientConnector
         WSADATA wsaData;
         int ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
-        if (ret != 0)
-        {
-            throw std::runtime_error("[ERROR] WSAStartup failed with error: " + std::to_string(ret));
+        if (ret != 0) {
+            throw std::runtime_error("[ERROR] WSAStartup failed with error: " +
+                                     std::to_string(ret));
         }
     }
 
@@ -38,8 +37,6 @@ class ClientConnector
         m_clientInfo = nullptr;
 
         WSACleanup();
-
-        OnDisConnect();
     }
 
     // Getters
@@ -59,8 +56,7 @@ class ClientConnector
     {
         m_listenSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
-        if (m_listenSocket == INVALID_SOCKET)
-        {
+        if (m_listenSocket == INVALID_SOCKET) {
             std::cout << "[ERROR] socket() failed:" << WSAGetLastError() << "\n";
             return false;
         }
@@ -70,11 +66,9 @@ class ClientConnector
         serverAddr.sin_addr.s_addr = htonl(INADDR_ANY);
         serverAddr.sin_port = htons(m_port);
 
-        int ret = bind(m_listenSocket, reinterpret_cast<SOCKADDR*>(&serverAddr),
-                       sizeof(serverAddr));
+        int ret = bind(m_listenSocket, (struct sockaddr*)&serverAddr, sizeof(serverAddr));
 
-        if (ret == SOCKET_ERROR)
-        {
+        if (ret == SOCKET_ERROR) {
             std::cout << "[ERROR] bind() failed:" << WSAGetLastError() << "\n";
             CloseListenSocket();
             return false;
@@ -82,8 +76,7 @@ class ClientConnector
 
         ret = listen(m_listenSocket, 1);
 
-        if (ret == SOCKET_ERROR)
-        {
+        if (ret == SOCKET_ERROR) {
             std::cout << "[ERROR] listen() failed:" << WSAGetLastError() << "\n";
             CloseListenSocket();
             return false;
@@ -95,8 +88,7 @@ class ClientConnector
     // Wait for one client connection
     bool Accept()
     {
-        if (m_listenSocket == INVALID_SOCKET || m_clientInfo != nullptr)
-        {
+        if (m_listenSocket == INVALID_SOCKET || m_clientInfo != nullptr) {
             return false;
         }
 
@@ -104,10 +96,9 @@ class ClientConnector
         int clientAddrSize = sizeof(clientAddr);
 
         SOCKET clientSocket =
-            accept(m_listenSocket, reinterpret_cast<SOCKADDR*>(&clientAddr), &clientAddrSize);
+            accept(m_listenSocket, (struct sockaddr*)&clientAddr, &clientAddrSize);
 
-        if (clientSocket == INVALID_SOCKET)
-        {
+        if (clientSocket == INVALID_SOCKET) {
             std::cout << "[ERROR] accept() failed:" << WSAGetLastError() << "\n";
             return false;
         }
@@ -122,8 +113,7 @@ class ClientConnector
     // Start receive and send data from client
     void StartNetworking()
     {
-        if (m_clientInfo == nullptr)
-        {
+        if (m_clientInfo == nullptr) {
             return;
         }
 
@@ -135,15 +125,12 @@ class ClientConnector
     {
         m_isNetworking = false;
 
-        if (m_clientInfo != nullptr &&
-            m_clientInfo->m_socket != INVALID_SOCKET)
-        {
+        if (m_clientInfo != nullptr && m_clientInfo->m_socket != INVALID_SOCKET) {
             shutdown(m_clientInfo->m_socket, SD_BOTH);
             CloseClientSocket();
         }
 
-        if (m_recvThread.joinable())
-        {
+        if (m_recvThread.joinable()) {
             m_recvThread.join();
         }
     }
@@ -151,8 +138,7 @@ class ClientConnector
     bool Send(const char* msg, const int len)
     {
         if (msg == nullptr || len <= 0 || m_clientInfo == nullptr ||
-            len > ClientInfo::m_bufferSize || m_isNetworking == false)
-        {
+            len > ClientInfo::m_bufferSize || m_isNetworking == false) {
             return false;
         }
 
@@ -160,8 +146,7 @@ class ClientConnector
 
         int ret = send(m_clientInfo->m_socket, m_clientInfo->m_sendBuffer, len, 0);
 
-        if (ret == SOCKET_ERROR)
-        {
+        if (ret == SOCKET_ERROR) {
             std::cout << "[ERROR] send() failed:" << WSAGetLastError() << "\n";
             return false;
         }
@@ -173,13 +158,12 @@ class ClientConnector
 
     virtual void OnReceive(char* message, int len) {}
 
-    virtual void OnDisConnect() {}
+    virtual void OnDisconnect() {}
 
   private:
     void CloseListenSocket()
     {
-        if (m_listenSocket == INVALID_SOCKET)
-        {
+        if (m_listenSocket == INVALID_SOCKET) {
             return;
         }
 
@@ -189,9 +173,7 @@ class ClientConnector
 
     void CloseClientSocket()
     {
-        if (m_clientInfo == nullptr ||
-            m_clientInfo->m_socket == INVALID_SOCKET)
-        {
+        if (m_clientInfo == nullptr || m_clientInfo->m_socket == INVALID_SOCKET) {
             return;
         }
 
@@ -206,30 +188,25 @@ class ClientConnector
 
     void Recv()
     {
-        while (m_isNetworking)
-        {
+        while (m_isNetworking) {
             int ret = recv(m_clientInfo->m_socket, m_clientInfo->m_recvBuffer,
                            ClientInfo::m_bufferSize, 0);
 
-            if (ret > 0)
-            {
+            if (ret > 0) {
                 OnReceive(m_clientInfo->m_recvBuffer, ret);
-            }
-            else if (ret == 0)
-            {
+            } else if (ret == 0) {
                 std::cout << "[RECV] Client connection closed\n";
                 m_isNetworking = false;
-            }
-            else
-            {
-                if (m_isNetworking)
-                {
+            } else {
+                if (m_isNetworking) {
                     std::cout << "[ERROR] recv() failed:" << WSAGetLastError() << "\n";
                 }
 
                 m_isNetworking = false;
             }
         }
+
+        OnDisconnect();
     }
 
     SOCKET m_listenSocket = INVALID_SOCKET;

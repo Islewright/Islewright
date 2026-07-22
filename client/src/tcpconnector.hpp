@@ -1,9 +1,8 @@
 #ifndef ISLEWRIGHT_TCPCONNECTOR_HPP
 #define ISLEWRIGHT_TCPCONNECTOR_HPP
 
-#include <WinSock2.h>
 #include <WS2tcpip.h>
-
+#include <WinSock2.h>
 #include <iostream>
 #include <string>
 #include <thread>
@@ -13,13 +12,14 @@ namespace islewright::tcpconnector {
 class TcpConnector
 {
   public:
-    TcpConnector(const std::string hostAddr = "127.0.0.1", const USHORT port = 9000) : m_serverAddr(hostAddr), m_port(port) 
+    TcpConnector(const std::string hostAddr = "127.0.0.1", const USHORT port = 9000)
+        : m_serverAddr(hostAddr), m_port(port)
     {
         WSADATA wsaData;
         int ret = WSAStartup(MAKEWORD(2, 2), &wsaData);
-        if (ret != 0) 
-        {
-            throw std::runtime_error("[ERROR] WSAStartup failed with error: " + std::to_string(ret));
+        if (ret != 0) {
+            throw std::runtime_error("[ERROR] WSAStartup failed with error: " +
+                                     std::to_string(ret));
         }
 
         m_recvBuffer = new char[m_bufferSize + 1];
@@ -34,8 +34,8 @@ class TcpConnector
         delete[] m_sendBuffer;
 
         WSACleanup();
-        
-        OnDisConnect();
+
+        OnDisconnect();
     }
 
     // Getters
@@ -48,7 +48,7 @@ class TcpConnector
     {
         return m_port;
     }
-    
+
     // Setters
     void SetHost(std::string hostAddr)
     {
@@ -64,8 +64,7 @@ class TcpConnector
     bool Connect()
     {
         m_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-        if (m_socket == INVALID_SOCKET) 
-        {
+        if (m_socket == INVALID_SOCKET) {
             std::cout << "[ERROR] socket() failed:" << WSAGetLastError() << "\n";
             return false;
         }
@@ -76,8 +75,7 @@ class TcpConnector
         inet_pton(AF_INET, m_serverAddr.c_str(), &serverAddr.sin_addr);
 
         int ret = connect(m_socket, (struct sockaddr*)&serverAddr, sizeof(SOCKADDR_IN));
-        if (ret == SOCKET_ERROR) 
-        {
+        if (ret == SOCKET_ERROR) {
             CloseSocket();
             return false;
         }
@@ -98,29 +96,25 @@ class TcpConnector
     {
         m_isNetworking = false;
 
-        if (m_socket != INVALID_SOCKET)
-        {
+        if (m_socket != INVALID_SOCKET) {
             CloseSocket();
         }
 
-        if (m_recvThread.joinable())
-        {
+        if (m_recvThread.joinable()) {
             m_recvThread.join();
         }
     }
 
     bool Send(const char* msg, const int len)
     {
-        if (msg == nullptr || len <= 0 || len > m_bufferSize || m_isNetworking == false) 
-        {
+        if (msg == nullptr || len <= 0 || len > m_bufferSize || m_isNetworking == false) {
             return false;
         }
 
         std::memcpy(m_sendBuffer, msg, len);
 
         int ret = send(m_socket, m_sendBuffer, len, 0);
-        if (ret == SOCKET_ERROR)
-        {
+        if (ret == SOCKET_ERROR) {
             std::cout << "[ERROR] send() failed:" << WSAGetLastError() << "\n";
             return false;
         }
@@ -132,7 +126,7 @@ class TcpConnector
 
     virtual void OnReceive(char* message, int len) {}
 
-    virtual void OnDisConnect() {}
+    virtual void OnDisconnect() {}
 
   private:
     void CloseSocket()
@@ -149,21 +143,15 @@ class TcpConnector
     // TODO: Create callback method of received data
     void Recv()
     {
-        while (m_isNetworking)
-        {
+        while (m_isNetworking) {
             int ret = recv(m_socket, m_recvBuffer, m_bufferSize, 0);
-            
-            if (ret > 0) 
-            {
+
+            if (ret > 0) {
                 OnReceive(m_recvBuffer, ret);
-            }
-            else if (ret == 0) 
-            {
+            } else if (ret == 0) {
                 std::cout << "[RECV] Server connection closed\n";
                 m_isNetworking = false;
-            }
-            else 
-            {
+            } else {
                 std::cout << "[ERROR] recv() failed:" << WSAGetLastError() << "\n";
                 m_isNetworking = false;
             }
