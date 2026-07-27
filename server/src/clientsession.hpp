@@ -36,11 +36,6 @@ class ClientSession : public ClientConnector
             std::format("[RECV] Length: {0}, Data: {1}\n", len, std::string_view(message, len));
         std::cout << log;
 
-        std::vector<char> packet(len);
-        std::memcpy(packet.data(), message, len);
-
-        m_receivedQueue.push(std::move(packet));
-
         Send(message, len);
     }
 
@@ -50,7 +45,6 @@ class ClientSession : public ClientConnector
     }
 
   private:
-    std::queue<std::vector<char>> m_receivedQueue;
 };
 
 } // namespace islewright::clientsession
