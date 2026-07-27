@@ -28,7 +28,7 @@ class ClientConnector
         }
     }
 
-    ~ClientConnector()
+    virtual ~ClientConnector()
     {
         EndNetworking();
         CloseListenSocket();

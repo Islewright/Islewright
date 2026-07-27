@@ -26,7 +26,7 @@ class TcpConnector
         m_sendBuffer = new char[BUFFER_SIZE + 1];
     }
 
-    ~TcpConnector()
+    virtual ~TcpConnector()
     {
         EndNetworking();
 
@@ -79,8 +79,6 @@ class TcpConnector
             CloseSocket();
             return false;
         }
-
-        OnConnect();
 
         return true;
     }
