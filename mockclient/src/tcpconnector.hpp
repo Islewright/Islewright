@@ -94,12 +94,14 @@ class TcpConnector
     {
         m_isNetworking = false;
 
-        if (m_socket != INVALID_SOCKET) {
-            CloseSocket();
-        }
+        shutdown(m_socket, SD_BOTH);
 
         if (m_recvThread.joinable()) {
             m_recvThread.join();
+        }
+
+        if (m_socket != INVALID_SOCKET) {
+            CloseSocket();
         }
     }
 
