@@ -3,6 +3,7 @@
 
 #include <WS2tcpip.h>
 #include <WinSock2.h>
+#include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -38,8 +39,6 @@ class TcpConnector
         delete[] m_sendBuffer;
 
         WSACleanup();
-
-        OnDisconnect();
     }
 
     // Getters
@@ -84,6 +83,8 @@ class TcpConnector
             return false;
         }
 
+        OnConnect();
+
         return true;
     }
 
@@ -98,7 +99,13 @@ class TcpConnector
     {
         m_isNetworking = false;
 
-        shutdown(m_socket, SD_BOTH);
+        {
+            std::lock_guard<std::mutex> lock(m_sendMutex);
+
+            if (m_socket != INVALID_SOCKET) {
+                shutdown(m_socket, SD_BOTH);
+            }
+        }
 
         if (m_recvThread.joinable()) {
             m_recvThread.join();
@@ -111,11 +118,16 @@ class TcpConnector
 
     bool Send(const char* msg, const int len)
     {
-        if (msg == nullptr || len <= 0 || len > BUFFER_SIZE || m_isNetworking == false) {
+        if (msg == nullptr || len <= 0 || len > BUFFER_SIZE) {
             return false;
         }
 
         std::lock_guard<std::mutex> lock(m_sendMutex);
+
+        if (!m_isNetworking || m_socket == INVALID_SOCKET) {
+            return false;
+        }
+
         const uint32_t networkLength = htonl(static_cast<uint32_t>(len));
 
         if (!SendAll(reinterpret_cast<const char*>(&networkLength), sizeof(networkLength))) {
@@ -207,13 +219,15 @@ class TcpConnector
                 m_isNetworking = false;
             }
         }
+
+        OnDisconnect();
     }
 
     SOCKET m_socket = INVALID_SOCKET;
     std::string m_serverAddr;
     USHORT m_port;
 
-    bool m_isNetworking = false;
+    std::atomic_bool m_isNetworking = false;
 
     std::thread m_recvThread;
     std::mutex m_sendMutex;

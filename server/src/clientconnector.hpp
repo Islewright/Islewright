@@ -5,6 +5,7 @@
 
 #include <WS2tcpip.h>
 #include <WinSock2.h>
+#include <atomic>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
@@ -129,24 +130,34 @@ class ClientConnector
     {
         m_isNetworking = false;
 
-        if (m_clientInfo != nullptr && m_clientInfo->m_socket != INVALID_SOCKET) {
-            shutdown(m_clientInfo->m_socket, SD_BOTH);
-            CloseClientSocket();
+        {
+            std::lock_guard<std::mutex> lock(m_sendMutex);
+
+            if (m_clientInfo != nullptr && m_clientInfo->m_socket != INVALID_SOCKET) {
+                shutdown(m_clientInfo->m_socket, SD_BOTH);
+            }
         }
 
         if (m_recvThread.joinable()) {
             m_recvThread.join();
         }
+
+        CloseClientSocket();
     }
 
     bool Send(const char* msg, const int len)
     {
-        if (msg == nullptr || len <= 0 || m_clientInfo == nullptr ||
-            len > ClientInfo::BUFFER_SIZE || m_isNetworking == false) {
+        if (msg == nullptr || len <= 0 || len > ClientInfo::BUFFER_SIZE) {
             return false;
         }
 
         std::lock_guard<std::mutex> lock(m_sendMutex);
+
+        if (!m_isNetworking || m_clientInfo == nullptr ||
+            m_clientInfo->m_socket == INVALID_SOCKET) {
+            return false;
+        }
+
         const uint32_t networkLength = htonl(static_cast<uint32_t>(len));
 
         if (!SendAll(reinterpret_cast<const char*>(&networkLength), sizeof(networkLength))) {
@@ -265,7 +276,7 @@ class ClientConnector
 
     ClientInfo* m_clientInfo = nullptr;
 
-    bool m_isNetworking = false;
+    std::atomic_bool m_isNetworking = false;
 
     std::thread m_recvThread;
     std::mutex m_sendMutex;
