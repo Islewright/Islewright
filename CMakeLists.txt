@@ -12,9 +12,10 @@ find_package(SDL3 CONFIG REQUIRED)
 
 enable_testing()
 
+add_subdirectory(common)
+add_subdirectory(client)
+
 if(WIN32)
-    add_subdirectory(common)
-    add_subdirectory(client)
     add_subdirectory(server)
 
     # mock client flag

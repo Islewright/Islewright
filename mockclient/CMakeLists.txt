@@ -1,11 +1,9 @@
 add_executable(islewright-mockclient
     src/main.cpp
+    src/networkmanager.hpp
+    src/tcpconnector.hpp
 )
 
-target_include_directories(islewright-mockclient
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/client/src
-)
 
 target_link_libraries(islewright-mockclient
     PRIVATE
