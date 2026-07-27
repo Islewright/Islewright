@@ -42,7 +42,7 @@ class TcpConnector
     }
 
     // Getters
-    std::string GetHost()
+    std::string GetServerAddr()
     {
         return m_serverAddr;
     }
@@ -53,9 +53,9 @@ class TcpConnector
     }
 
     // Setters
-    void SetHost(std::string hostAddr)
+    void GetServerAddr(std::string serverAddr)
     {
-        m_serverAddr = hostAddr;
+        m_serverAddr = serverAddr;
     }
 
     void SetPort(USHORT port)
@@ -137,11 +137,11 @@ class TcpConnector
         return SendAll(msg, len);
     }
 
-    virtual void OnConnect() {}
+    virtual void OnConnect() = 0;
 
-    virtual void OnReceive(char* message, int len) {}
+    virtual void OnReceive(char* message, int len) = 0;
 
-    virtual void OnDisconnect() {}
+    virtual void OnDisconnect() = 0;
 
   private:
     bool SendAll(const char* data, int len)

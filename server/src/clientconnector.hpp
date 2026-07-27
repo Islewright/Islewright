@@ -133,8 +133,8 @@ class ClientConnector
         {
             std::lock_guard<std::mutex> lock(m_sendMutex);
 
-            if (m_clientInfo != nullptr && m_clientInfo->m_socket != INVALID_SOCKET) {
-                shutdown(m_clientInfo->m_socket, SD_BOTH);
+            if (m_clientInfo != nullptr && m_clientInfo->socket != INVALID_SOCKET) {
+                shutdown(m_clientInfo->socket, SD_BOTH);
             }
         }
 
@@ -154,7 +154,7 @@ class ClientConnector
         std::lock_guard<std::mutex> lock(m_sendMutex);
 
         if (!m_isNetworking || m_clientInfo == nullptr ||
-            m_clientInfo->m_socket == INVALID_SOCKET) {
+            m_clientInfo->socket == INVALID_SOCKET) {
             return false;
         }
 
@@ -167,11 +167,11 @@ class ClientConnector
         return SendAll(msg, len);
     }
 
-    virtual void OnConnect() {}
+    virtual void OnConnect() = 0;
 
-    virtual void OnReceive(char* message, int len) {}
+    virtual void OnReceive(char* message, int len) = 0;
 
-    virtual void OnDisconnect() {}
+    virtual void OnDisconnect() = 0;
 
   private:
     bool SendAll(const char* data, int len)
@@ -179,7 +179,7 @@ class ClientConnector
         int totalSent = 0;
 
         while (totalSent < len) {
-            const int sent = send(m_clientInfo->m_socket, data + totalSent, len - totalSent, 0);
+            const int sent = send(m_clientInfo->socket, data + totalSent, len - totalSent, 0);
 
             if (sent == SOCKET_ERROR || sent == 0) {
                 std::cout << "[ERROR] send() failed:" << WSAGetLastError() << "\n";
@@ -233,12 +233,12 @@ class ClientConnector
 
     void CloseClientSocket()
     {
-        if (m_clientInfo == nullptr || m_clientInfo->m_socket == INVALID_SOCKET) {
+        if (m_clientInfo == nullptr || m_clientInfo->socket == INVALID_SOCKET) {
             return;
         }
 
-        closesocket(m_clientInfo->m_socket);
-        m_clientInfo->m_socket = INVALID_SOCKET;
+        closesocket(m_clientInfo->socket);
+        m_clientInfo->socket = INVALID_SOCKET;
     }
 
     void CreateRecvThread()
@@ -249,11 +249,11 @@ class ClientConnector
     void Recv()
     {
         while (m_isNetworking) {
-            int ret = recv(m_clientInfo->m_socket, m_clientInfo->m_recvBuffer,
+            int ret = recv(m_clientInfo->socket, m_clientInfo->recvBuffer,
                            ClientInfo::BUFFER_SIZE, 0);
 
             if (ret > 0) {
-                if (!ProcessReceivedData(m_clientInfo->m_recvBuffer, ret)) {
+                if (!ProcessReceivedData(m_clientInfo->recvBuffer, ret)) {
                     m_isNetworking = false;
                 }
             } else if (ret == 0) {

@@ -24,9 +24,10 @@ class NetworkManager : public TcpConnector
     // Network receive callback handler
     void OnReceive(char* message, int len) override
     {
-        if (message == nullptr || len <= 0)
+        if (message == nullptr || len <= 0) {
             return;
-
+        }
+        
         std::string log =
             std::format("[RECV] Length: {0}, Data: {1}\n", len, std::string_view(message, len));
         std::cout << log;
