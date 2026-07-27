@@ -3,9 +3,13 @@
 
 #include <WS2tcpip.h>
 #include <WinSock2.h>
+#include <cstdint>
+#include <cstring>
 #include <iostream>
+#include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 namespace islewright::tcpconnector {
 
@@ -111,15 +115,14 @@ class TcpConnector
             return false;
         }
 
-        std::memcpy(m_sendBuffer, msg, len);
+        std::lock_guard<std::mutex> lock(m_sendMutex);
+        const uint32_t networkLength = htonl(static_cast<uint32_t>(len));
 
-        int ret = send(m_socket, m_sendBuffer, len, 0);
-        if (ret == SOCKET_ERROR) {
-            std::cout << "[ERROR] send() failed:" << WSAGetLastError() << "\n";
+        if (!SendAll(reinterpret_cast<const char*>(&networkLength), sizeof(networkLength))) {
             return false;
         }
 
-        return true;
+        return SendAll(msg, len);
     }
 
     virtual void OnConnect() {}
@@ -129,6 +132,53 @@ class TcpConnector
     virtual void OnDisconnect() {}
 
   private:
+    bool SendAll(const char* data, int len)
+    {
+        int totalSent = 0;
+
+        while (totalSent < len) {
+            const int sent = send(m_socket, data + totalSent, len - totalSent, 0);
+
+            if (sent == SOCKET_ERROR || sent == 0) {
+                std::cout << "[ERROR] send() failed:" << WSAGetLastError() << "\n";
+                return false;
+            }
+
+            totalSent += sent;
+        }
+
+        return true;
+    }
+
+    bool ProcessReceivedData(const char* data, int len)
+    {
+        m_receiveAccumulator.insert(m_receiveAccumulator.end(), data, data + len);
+
+        constexpr std::size_t HEADER_SIZE = sizeof(uint32_t);
+
+        while (m_receiveAccumulator.size() >= HEADER_SIZE) {
+            uint32_t networkLength = 0;
+            std::memcpy(&networkLength, m_receiveAccumulator.data(), HEADER_SIZE);
+
+            const uint32_t payloadLength = ntohl(networkLength);
+            if (payloadLength == 0 || payloadLength > BUFFER_SIZE) {
+                std::cout << "[ERROR] Invalid payload length:" << payloadLength << "\n";
+                return false;
+            }
+
+            const std::size_t frameSize = HEADER_SIZE + payloadLength;
+            if (m_receiveAccumulator.size() < frameSize) {
+                return true;
+            }
+
+            OnReceive(m_receiveAccumulator.data() + HEADER_SIZE, static_cast<int>(payloadLength));
+            m_receiveAccumulator.erase(m_receiveAccumulator.begin(),
+                                       m_receiveAccumulator.begin() + frameSize);
+        }
+
+        return true;
+    }
+
     void CloseSocket()
     {
         closesocket(m_socket);
@@ -146,7 +196,9 @@ class TcpConnector
             int ret = recv(m_socket, m_recvBuffer, BUFFER_SIZE, 0);
 
             if (ret > 0) {
-                OnReceive(m_recvBuffer, ret);
+                if (!ProcessReceivedData(m_recvBuffer, ret)) {
+                    m_isNetworking = false;
+                }
             } else if (ret == 0) {
                 std::cout << "[RECV] Server connection closed\n";
                 m_isNetworking = false;
@@ -164,6 +216,8 @@ class TcpConnector
     bool m_isNetworking = false;
 
     std::thread m_recvThread;
+    std::mutex m_sendMutex;
+    std::vector<char> m_receiveAccumulator;
 
     static constexpr int BUFFER_SIZE = 1024;
     char* m_recvBuffer = nullptr;
