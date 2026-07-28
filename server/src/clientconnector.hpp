@@ -130,18 +130,15 @@ class ClientConnector
     {
         m_isNetworking = false;
 
-        {
-            std::lock_guard<std::mutex> lock(m_sendMutex);
-
-            if (m_clientInfo != nullptr && m_clientInfo->socket != INVALID_SOCKET) {
-                shutdown(m_clientInfo->socket, SD_BOTH);
-            }
+        if (m_clientInfo != nullptr && m_clientInfo->socket != INVALID_SOCKET) {
+            shutdown(m_clientInfo->socket, SD_BOTH);
         }
 
         if (m_recvThread.joinable()) {
             m_recvThread.join();
         }
 
+        std::lock_guard<std::mutex> lock(m_sendMutex);
         CloseClientSocket();
     }
 
