@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package islewright.protocol;
+
+message CreateWorldRequest {
+  optional uint64 seed = 1;
+}
+
+message CreateWorldResponse {
+  uint64 seed = 1;
+  bool success = 2;
+}
