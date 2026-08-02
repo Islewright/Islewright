@@ -2,19 +2,31 @@
 #define ISLEWRIGHT_CLIENTSESSION_HPP
 
 #include "clientconnector.hpp"
+#include "islewright/common/serializer.hpp"
+#include "islewright/common/world.hpp"
+#include "islewright.pb.h"
 
-#include <cstring>
-#include <format>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
-#include <queue>
+#include <memory>
+#include <random>
 #include <string>
-#include <string_view>
-#include <utility>
-#include <vector>
 
 namespace islewright::clientsession {
 
 using ClientConnector = islewright::clientconnector::ClientConnector;
+using ProtobufSerializer = islewright::common::ProtobufSerializer;
+using World = islewright::common::World;
+using Packet = islewright::protocol::Packet;
+
+enum class SessionState
+{
+    AwaitingConnection,
+    AwaitingWorld,
+    WorldReady,
+    Disconnected
+};
 
 class ClientSession : public ClientConnector
 {
@@ -23,6 +35,7 @@ class ClientSession : public ClientConnector
 
     void OnConnect() override
     {
+        SetState(SessionState::AwaitingWorld);
         std::cout << "[CONNECT] Client connected success\n";
     }
 
@@ -32,19 +45,137 @@ class ClientSession : public ClientConnector
             return;
         }
 
-        std::string log =
-            std::format("[RECV] Length: {0}, Data: {1}\n", len, std::string_view(message, len));
-        std::cout << log;
+        Packet request;
+        if (!ProtobufSerializer::Deserialize(message, static_cast<std::size_t>(len), request)) {
+            SendError(0, islewright::protocol::ErrorResponse::INVALID_REQUEST,
+                      "Malformed protobuf packet");
+            return;
+        }
 
-        Send(message, len);
+        if (request.protocol_version() != ProtocolVersion) {
+            SendError(request.request_id(),
+                      islewright::protocol::ErrorResponse::UNSUPPORTED_VERSION,
+                      "Unsupported protocol version");
+            return;
+        }
+
+        ProcessPacket(request);
     }
 
     void OnDisconnect() override
     {
+        SetState(SessionState::Disconnected);
+        m_world.reset();
         std::cout << "[DISCONNECT] Client disconnected\n";
     }
 
   private:
+    static constexpr std::uint32_t ProtocolVersion = 1;
+
+    static std::uint64_t GenerateSeed()
+    {
+        std::random_device random;
+        return (static_cast<std::uint64_t>(random()) << 32) | random();
+    }
+
+    using PacketHandler = void (ClientSession::*)(const Packet&);
+
+    void SetState(SessionState state)
+    {
+        m_state = state;
+
+        switch (state) {
+        case SessionState::AwaitingWorld:
+            m_packetHandler = &ClientSession::ProcessAwaitingWorld;
+            break;
+        case SessionState::WorldReady:
+            m_packetHandler = &ClientSession::ProcessWorldReady;
+            break;
+        case SessionState::AwaitingConnection:
+        case SessionState::Disconnected:
+            m_packetHandler = &ClientSession::ProcessInactive;
+            break;
+        }
+    }
+
+    void ProcessPacket(const Packet& request)
+    {
+        (this->*m_packetHandler)(request);
+    }
+
+    void ProcessInactive(const Packet& request)
+    {
+        SendError(request.request_id(), islewright::protocol::ErrorResponse::INVALID_REQUEST,
+                  "Session is not active");
+    }
+
+    void ProcessAwaitingWorld(const Packet& request)
+    {
+        if (!request.has_create_world_request()) {
+            SendError(request.request_id(), islewright::protocol::ErrorResponse::INVALID_REQUEST,
+                      "CreateWorldRequest is required before using world services");
+            return;
+        }
+
+        const auto& createRequest = request.create_world_request();
+        const std::uint64_t seed = createRequest.has_seed() ? createRequest.seed() : GenerateSeed();
+        m_world = std::make_unique<World>(seed);
+
+        Packet response;
+        response.set_protocol_version(ProtocolVersion);
+        response.set_request_id(request.request_id());
+        response.mutable_create_world_response()->set_seed(m_world->Seed());
+
+        if (!SendPacket(response)) {
+            m_world.reset();
+            SendError(request.request_id(), islewright::protocol::ErrorResponse::INTERNAL_ERROR,
+                      "Failed to send CreateWorldResponse");
+            return;
+        }
+
+        SetState(SessionState::WorldReady);
+        std::cout << "[WORLD] Created world with seed " << m_world->Seed() << '\n';
+    }
+
+    void ProcessWorldReady(const Packet& request)
+    {
+        if (request.has_create_world_request()) {
+            SendError(request.request_id(), islewright::protocol::ErrorResponse::INVALID_REQUEST,
+                      "World is already created for this session");
+            return;
+        }
+
+        SendError(request.request_id(), islewright::protocol::ErrorResponse::INVALID_REQUEST,
+                  "Unsupported service for WorldReady session");
+    }
+
+    bool SendPacket(const Packet& packet)
+    {
+        std::string serialized;
+        if (!ProtobufSerializer::Serialize(packet, serialized) || serialized.empty()) {
+            return false;
+        }
+        return Send(serialized.data(), static_cast<int>(serialized.size()));
+    }
+
+    void SendError(std::uint64_t requestId, islewright::protocol::ErrorResponse::Code code,
+                   const std::string& message)
+    {
+        Packet response;
+        response.set_protocol_version(ProtocolVersion);
+        response.set_request_id(requestId);
+        auto* error = response.mutable_error_response();
+        error->set_code(code);
+        error->set_message(message);
+
+        if (!SendPacket(response)) {
+            std::cerr << "[ERROR] Failed to send ErrorResponse\n";
+        }
+    }
+
+    std::unique_ptr<World> m_world;
+    SessionState m_state = SessionState::AwaitingConnection;
+    PacketHandler m_packetHandler = &ClientSession::ProcessInactive;
 };
 
 } // namespace islewright::clientsession
