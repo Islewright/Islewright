@@ -1,9 +1,12 @@
 #ifndef ISLEWRIGHT_COMMON_SERIALIZER_HPP
 #define ISLEWRIGHT_COMMON_SERIALIZER_HPP
 
-#include <optional>
+#include <cstddef>
 #include <string>
-#include <string_view>
+
+namespace islewright::protocol {
+class Packet;
+}
 
 namespace islewright::common {
 
@@ -12,9 +15,8 @@ class ProtobufSerializer
   public:
     ProtobufSerializer() = delete;
 
-    static std::optional<std::string> Serialize();
-
-    static bool Deserialize(const char* msg, const int len);
+    static bool Serialize(const protocol::Packet& packet, std::string& output);
+    static bool Deserialize(const void* data, std::size_t size, protocol::Packet& packet);
 };
 
 } // namespace islewright::common
