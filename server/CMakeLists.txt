@@ -3,6 +3,7 @@ add_executable(islewright-server
     src/clientinfo.hpp
     src/clientconnector.hpp
     src/clientsession.hpp
+    src/gameinstance.hpp
     src/gameloop.hpp
 )
 

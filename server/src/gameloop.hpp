@@ -60,11 +60,6 @@ class GameLoop
         while (m_running) {
             handler(tick++);
             nextTick += TickInterval;
-
-            const auto now = Clock::now();
-            if (now > nextTick + TickInterval * 4) {
-                nextTick = now;
-            }
             std::this_thread::sleep_until(nextTick);
         }
     }
