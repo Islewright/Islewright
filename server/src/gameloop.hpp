@@ -63,7 +63,7 @@ class GameLoop
             std::this_thread::sleep_until(nextTick);
         }
     }
-
+    
     std::atomic_bool m_running = false;
     std::thread m_thread;
 };
