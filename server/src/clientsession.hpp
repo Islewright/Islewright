@@ -2,6 +2,7 @@
 #define ISLEWRIGHT_CLIENTSESSION_HPP
 
 #include "clientconnector.hpp"
+#include "gameloop.hpp"
 #include "islewright/common/serializer.hpp"
 #include "islewright/common/world.hpp"
 #include "islewright.pb.h"
@@ -10,8 +11,11 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <mutex>
+#include <queue>
 #include <random>
 #include <string>
+#include <utility>
 
 namespace islewright::clientsession {
 
@@ -19,6 +23,7 @@ using ClientConnector = islewright::clientconnector::ClientConnector;
 using ProtobufSerializer = islewright::common::ProtobufSerializer;
 using World = islewright::common::World;
 using Packet = islewright::protocol::Packet;
+using GameLoop = islewright::gameloop::GameLoop;
 
 enum class SessionState
 {
@@ -32,6 +37,30 @@ class ClientSession : public ClientConnector
 {
   public:
     using ClientConnector::ClientConnector;
+
+    ~ClientSession() override
+    {
+        EndNetworking();
+    }
+
+    void StartNetworking()
+    {
+        m_gameLoop.Start([this](std::uint64_t tick) { Tick(tick); });
+        ClientConnector::StartNetworking();
+    }
+
+    void EndNetworking()
+    {
+        ClientConnector::EndNetworking();
+        m_gameLoop.Stop();
+        SetState(SessionState::Disconnected);
+        m_world.reset();
+
+        std::lock_guard<std::mutex> lock(m_packetMutex);
+        while (!m_packets.empty()) {
+            m_packets.pop();
+        }
+    }
 
     void OnConnect() override
     {
@@ -52,20 +81,12 @@ class ClientSession : public ClientConnector
             return;
         }
 
-        if (request.protocol_version() != ProtocolVersion) {
-            SendError(request.request_id(),
-                      islewright::protocol::ErrorResponse::UNSUPPORTED_VERSION,
-                      "Unsupported protocol version");
-            return;
-        }
-
-        ProcessPacket(request);
+        std::lock_guard<std::mutex> lock(m_packetMutex);
+        m_packets.push(std::move(request));
     }
 
     void OnDisconnect() override
     {
-        SetState(SessionState::Disconnected);
-        m_world.reset();
         std::cout << "[DISCONNECT] Client disconnected\n";
     }
 
@@ -76,6 +97,45 @@ class ClientSession : public ClientConnector
     {
         std::random_device random;
         return (static_cast<std::uint64_t>(random()) << 32) | random();
+    }
+
+    void Tick(std::uint64_t tick)
+    {
+        ProcessPendingPackets();
+        UpdateWorld(tick);
+    }
+
+    void ProcessPendingPackets()
+    {
+        std::queue<Packet> packets;
+        {
+            std::lock_guard<std::mutex> lock(m_packetMutex);
+            packets.swap(m_packets);
+        }
+
+        while (!packets.empty()) {
+            Packet request = std::move(packets.front());
+            packets.pop();
+
+            if (request.protocol_version() != ProtocolVersion) {
+                SendError(request.request_id(),
+                          islewright::protocol::ErrorResponse::UNSUPPORTED_VERSION,
+                          "Unsupported protocol version");
+                continue;
+            }
+
+            ProcessPacket(request);
+        }
+    }
+
+    void UpdateWorld(std::uint64_t tick)
+    {
+        if (m_state != SessionState::WorldReady || m_world == nullptr) {
+            return;
+        }
+
+        // World simulation systems will be updated here in deterministic tick order.
+        (void)tick;
     }
 
     using PacketHandler = void (ClientSession::*)(const Packet&);
@@ -176,6 +236,9 @@ class ClientSession : public ClientConnector
     std::unique_ptr<World> m_world;
     SessionState m_state = SessionState::AwaitingConnection;
     PacketHandler m_packetHandler = &ClientSession::ProcessInactive;
+    GameLoop m_gameLoop;
+    std::mutex m_packetMutex;
+    std::queue<Packet> m_packets;
 };
 
 } // namespace islewright::clientsession
