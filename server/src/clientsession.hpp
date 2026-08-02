@@ -13,7 +13,6 @@
 #include <memory>
 #include <mutex>
 #include <queue>
-#include <random>
 #include <string>
 #include <utility>
 
@@ -92,12 +91,6 @@ class ClientSession : public ClientConnector
 
   private:
     static constexpr std::uint32_t ProtocolVersion = 1;
-
-    static std::uint64_t GenerateSeed()
-    {
-        std::random_device random;
-        return (static_cast<std::uint64_t>(random()) << 32) | random();
-    }
 
     void Tick(std::uint64_t tick)
     {
@@ -178,7 +171,13 @@ class ClientSession : public ClientConnector
         }
 
         const auto& createRequest = request.create_world_request();
-        const std::uint64_t seed = createRequest.has_seed() ? createRequest.seed() : GenerateSeed();
+        if (!createRequest.has_seed()) {
+            SendError(request.request_id(), islewright::protocol::ErrorResponse::INVALID_REQUEST,
+                      "CreateWorldRequest requires a seed");
+            return;
+        }
+
+        const std::uint64_t seed = createRequest.seed();
         m_world = std::make_unique<World>(seed);
 
         Packet response;
