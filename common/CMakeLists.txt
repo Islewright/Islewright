@@ -2,7 +2,7 @@ add_library(islewright-common STATIC
     src/serializer.cpp
     src/version.cpp
     src/world.cpp
-    proto/islewright.proto
+    proto/islewright/protocol/islewright.proto
 )
 
 protobuf_generate(TARGET islewright-common LANGUAGE cpp APPEND_PATH)

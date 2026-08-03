@@ -7,6 +7,7 @@
 #include <functional>
 #include <thread>
 #include <utility>
+#include <mutex>
 
 namespace islewright::gameloop {
 
@@ -29,6 +30,7 @@ class GameLoop
 
     void Start(TickHandler handler)
     {
+        std::lock_guard<std::mutex> lock(m_lifecycleMutex);
         if (m_running.exchange(true)) {
             return;
         }
@@ -38,6 +40,7 @@ class GameLoop
 
     void Stop()
     {
+        std::lock_guard<std::mutex> lock(m_lifecycleMutex);
         m_running = false;
         if (m_thread.joinable()) {
             m_thread.join();
@@ -60,12 +63,19 @@ class GameLoop
         while (m_running) {
             handler(tick++);
             nextTick += TickInterval;
+            const auto now = Clock::now();
+            if(nextTick < now)
+            {
+                nextTick = now;
+                continue;
+            }
             std::this_thread::sleep_until(nextTick);
         }
     }
     
     std::atomic_bool m_running = false;
     std::thread m_thread;
+    std::mutex m_lifecycleMutex;
 };
 
 } // namespace islewright::gameloop

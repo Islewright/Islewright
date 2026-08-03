@@ -31,6 +31,7 @@ class ClientSession : public ClientConnector
     ~ClientSession() override
     {
         EndNetworking();
+        m_gameInstance.Stop();
         m_gameInstance.SetResponseHandler({});
     }
 

@@ -37,6 +37,11 @@ class GameInstance
     GameInstance(const GameInstance&) = delete;
     GameInstance& operator=(const GameInstance&) = delete;
 
+    ~GameInstance()
+    {
+        m_gameLoop.Stop();
+    }
+
     void Start()
     {
         m_gameLoop.Start([this](std::uint64_t tick) { Tick(tick); });
@@ -56,10 +61,16 @@ class GameInstance
     void Enqueue(Packet packet)
     {
         std::lock_guard<std::mutex> lock(m_packetMutex);
+        if(m_packets.size() >= MaxPacketQueueSize) {
+            return;
+        }
+        
         m_packets.push(std::move(packet));
     }
 
   private:
+    static constexpr std::size_t MaxPacketQueueSize = 32;
+
     void Tick(std::uint64_t tick)
     {
         ProcessPendingPackets();
