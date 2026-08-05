@@ -61,7 +61,7 @@ class GameInstance
     void Enqueue(Packet packet)
     {
         std::lock_guard<std::mutex> lock(m_packetMutex);
-        if(m_packets.size() >= MaxPacketQueueSize) {
+        if(m_packets.size() >= MAX_PACKET_QUEUE_SIZE) {
             return;
         }
         
@@ -69,7 +69,7 @@ class GameInstance
     }
 
   private:
-    static constexpr std::size_t MaxPacketQueueSize = 32;
+    static constexpr std::size_t MAX_PACKET_QUEUE_SIZE = 32;
 
     void Tick(std::uint64_t tick)
     {

@@ -16,8 +16,8 @@ class GameLoop
   public:
     using TickHandler = std::function<void(std::uint64_t)>;
 
-    static constexpr std::uint32_t TickRate = 20;
-    static constexpr auto TickInterval = std::chrono::milliseconds(1000 / TickRate);
+    static constexpr std::uint32_t TICK_RATE = 20;
+    static constexpr auto TICK_INTERVAL = std::chrono::milliseconds(1000 / TICK_RATE);
 
     GameLoop() = default;
     GameLoop(const GameLoop&) = delete;
@@ -62,7 +62,7 @@ class GameLoop
 
         while (m_running) {
             handler(tick++);
-            nextTick += TickInterval;
+            nextTick += TICK_INTERVAL;
             const auto now = Clock::now();
             if(nextTick < now)
             {

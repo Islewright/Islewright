@@ -7,12 +7,12 @@
 namespace islewright::common {
 
 namespace {
-constexpr std::size_t MaxSerializedSize = 1024 * 1024;
+constexpr std::size_t MAX_SERIALIZED_SIZE = 1024 * 1024;
 }
 
 bool ProtobufSerializer::Serialize(const protocol::Packet& packet, std::string& output)
 {
-    if (packet.ByteSizeLong() > MaxSerializedSize) {
+    if (packet.ByteSizeLong() > MAX_SERIALIZED_SIZE) {
         return false;
     }
     return packet.SerializeToString(&output);
@@ -20,7 +20,7 @@ bool ProtobufSerializer::Serialize(const protocol::Packet& packet, std::string& 
 
 bool ProtobufSerializer::Deserialize(const void* data, std::size_t size, protocol::Packet& packet)
 {
-    if ((data == nullptr && size != 0) || size > MaxSerializedSize ||
+    if ((data == nullptr && size != 0) || size > MAX_SERIALIZED_SIZE ||
         size > static_cast<std::size_t>(std::numeric_limits<int>::max())) {
         return false;
     }
