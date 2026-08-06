@@ -36,6 +36,8 @@ class GameInstance
     GameInstance() = default;
     GameInstance(const GameInstance&) = delete;
     GameInstance& operator=(const GameInstance&) = delete;
+    GameInstance(GameInstance&&) = delete;
+    GameInstance& operator=(GameInstance&&) = delete;
 
     ~GameInstance()
     {
