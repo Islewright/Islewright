@@ -22,8 +22,8 @@ using Packet = islewright::protocol::Packet;
 class ClientSession : public ClientConnector
 {
   public:
-    explicit ClientSession(GameInstance& gameInstance, USHORT port = 9000)
-        : ClientConnector(port), m_gameInstance(gameInstance)
+    explicit ClientSession(USHORT port = 9000)
+        : ClientConnector(port)
     {
         m_gameInstance.SetResponseHandler(
             [this](const Packet& packet) { return SendPacket(packet); });
@@ -31,9 +31,31 @@ class ClientSession : public ClientConnector
 
     ~ClientSession() override
     {
+        End();
+        m_gameInstance.SetResponseHandler({});
+    }
+
+    bool Run()
+    {
+        if (!Listen()) {
+            return false;
+        }
+
+        std::cout << "[LISTEN] Waiting for client\n";
+
+        if (!Accept()) {
+            return false;
+        }
+
+        m_gameInstance.Start();
+        StartNetworking();
+        return true;
+    }
+
+    void End()
+    {
         EndNetworking();
         m_gameInstance.Stop();
-        m_gameInstance.SetResponseHandler({});
     }
 
     void OnConnect() override
@@ -87,7 +109,7 @@ class ClientSession : public ClientConnector
         }
     }
 
-    GameInstance& m_gameInstance;
+    GameInstance m_gameInstance;
 };
 
 } // namespace islewright::clientsession
