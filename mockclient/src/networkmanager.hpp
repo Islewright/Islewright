@@ -3,6 +3,7 @@
 
 #include "tcpconnector.hpp"
 #include "islewright/common/serializer.hpp"
+#include "islewright/common/protocolversion.hpp"
 #include "islewright.pb.h"
 
 #include <atomic>
@@ -28,7 +29,7 @@ class NetworkManager : public TcpConnector
     bool RequestWorld(std::uint64_t seed)
     {
         Packet request;
-        request.set_protocol_version(ProtocolVersion);
+        request.set_protocol_version(islewright::common::PROTOCOL_VERSION);
         request.set_request_id(m_nextRequestId++);
         request.mutable_create_world_request()->set_seed(seed);
 
@@ -51,7 +52,7 @@ class NetworkManager : public TcpConnector
             return;
         }
 
-        if (response.protocol_version() != ProtocolVersion) {
+        if (response.protocol_version() != islewright::common::PROTOCOL_VERSION) {
             std::cerr << "[ERROR] Unsupported protocol version: " << response.protocol_version()
                       << '\n';
             return;
@@ -75,7 +76,6 @@ class NetworkManager : public TcpConnector
     }
 
   private:
-    static constexpr std::uint32_t ProtocolVersion = 1;
     std::atomic_uint64_t m_nextRequestId = 1;
 };
 

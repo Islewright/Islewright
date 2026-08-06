@@ -4,6 +4,7 @@
 #include "clientconnector.hpp"
 #include "gameinstance.hpp"
 #include "islewright/common/serializer.hpp"
+#include "islewright/common/protocolversion.hpp"
 #include "islewright.pb.h"
 
 #include <cstddef>
@@ -75,7 +76,7 @@ class ClientSession : public ClientConnector
                    const std::string& message)
     {
         Packet response;
-        response.set_protocol_version(GameInstance::ProtocolVersion);
+        response.set_protocol_version(islewright::common::PROTOCOL_VERSION);
         response.set_request_id(requestId);
         auto* error = response.mutable_error_response();
         error->set_code(code);

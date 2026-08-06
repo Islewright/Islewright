@@ -3,6 +3,7 @@
 
 #include "gameloop.hpp"
 #include "islewright/common/world.hpp"
+#include "islewright/common/protocolversion.hpp"
 #include "islewright.pb.h"
 
 #include <cstddef>
@@ -30,8 +31,6 @@ class GameInstance
 {
   public:
     using ResponseHandler = std::function<bool(const Packet&)>;
-
-    static constexpr std::uint32_t ProtocolVersion = 1;
 
     GameInstance() = default;
     GameInstance(const GameInstance&) = delete;
@@ -95,7 +94,7 @@ class GameInstance
 
     void ProcessPacket(const Packet& request)
     {
-        if (request.protocol_version() != ProtocolVersion) {
+        if (request.protocol_version() != islewright::common::PROTOCOL_VERSION) {
             SendError(request.request_id(),
                       islewright::protocol::ErrorResponse::UNSUPPORTED_VERSION,
                       "Unsupported protocol version");
@@ -123,7 +122,7 @@ class GameInstance
         m_world = std::make_unique<World>(createRequest.seed());
 
         Packet response;
-        response.set_protocol_version(ProtocolVersion);
+        response.set_protocol_version(islewright::common::PROTOCOL_VERSION);
         response.set_request_id(request.request_id());
         response.mutable_create_world_response()->set_seed(m_world->Seed());
 
@@ -189,7 +188,7 @@ class GameInstance
                    const std::string& message)
     {
         Packet response;
-        response.set_protocol_version(ProtocolVersion);
+        response.set_protocol_version(islewright::common::PROTOCOL_VERSION);
         response.set_request_id(requestId);
         auto* error = response.mutable_error_response();
         error->set_code(code);
