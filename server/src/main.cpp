@@ -6,27 +6,20 @@
 
 int main()
 {
-    std::cout << islewright::common::project_name() << " server "
-              << islewright::common::project_version() << '\n';
+    std::cout << islewright::common::project_name() << " server " << islewright::common::project_version() << '\n';
+    
     using ClientSession = islewright::clientsession::ClientSession;
+
     ClientSession session;
 
-    if (!session.Listen()) {
+    if (!session.Run()) {
         return EXIT_FAILURE;
     }
-
-    std::cout << "[LISTEN] Waiting for client\n";
-
-    if (!session.Accept()) {
-        return EXIT_FAILURE;
-    }
-
-    session.StartNetworking();
 
     std::cout << "Press Enter to stop server\n";
     std::cin.get();
 
-    session.EndNetworking();
+    session.End();
 
     return EXIT_SUCCESS;
 }

@@ -8,6 +8,7 @@ project(
 )
 
 find_package(EnTT CONFIG REQUIRED)
+find_package(Protobuf CONFIG REQUIRED)
 find_package(SDL3 CONFIG REQUIRED)
 
 enable_testing()
