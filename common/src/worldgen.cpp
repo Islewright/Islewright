@@ -21,9 +21,8 @@ void generate_chunk(Chunk& chunk, std::uint64_t seed)
 
     for (int y = 0; y < CHUNK_HEIGHT; ++y) {
         for (int x = 0; x < CHUNK_WIDTH; ++x) {
-            const std::int64_t worldX = static_cast<std::int64_t>(chunk.coord.cx) * CHUNK_WIDTH + x;
-            const std::int64_t worldY =
-                static_cast<std::int64_t>(chunk.coord.cy) * CHUNK_HEIGHT + y;
+            const std::int64_t worldX = static_cast<std::int64_t>(chunk.coord.x) * CHUNK_WIDTH + x;
+            const std::int64_t worldY = static_cast<std::int64_t>(chunk.coord.y) * CHUNK_HEIGHT + y;
             const std::int64_t radius =
                 ISLAND_RADIUS + static_cast<std::int64_t>(rng() % 9) - SHORE_JITTER;
 
