@@ -31,6 +31,7 @@ class World
     const entt::registry& Registry() const noexcept;
 
     entt::entity EmplaceChunk(Chunk chunk);
+    entt::entity EnsureChunk(ChunkCoord coord);
 
     bool HasChunk(ChunkCoord coord) const noexcept;
     const Tile* TileAt(TileCoord tile) const noexcept;
