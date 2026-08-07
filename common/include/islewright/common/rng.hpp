@@ -13,6 +13,7 @@ constexpr std::uint64_t splitmix64(std::uint64_t x) noexcept
     x += 0x9E3779B97F4A7C15ULL;
     x = (x ^ (x >> 30)) * 0xBF58476D1CE4E5B9ULL;
     x = (x ^ (x >> 27)) * 0x94D049BB133111EBULL;
+
     return x ^ (x >> 31);
 }
 
@@ -25,8 +26,9 @@ constexpr std::uint64_t splitmix64(std::uint64_t x) noexcept
 constexpr std::uint64_t hash_coord(std::uint64_t seed, ChunkCoord chunk) noexcept
 {
     std::uint64_t h = splitmix64(seed);
-    h = splitmix64(h ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(chunk.cx)));
-    h = splitmix64(h ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(chunk.cy)));
+    h = splitmix64(h ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(chunk.x)));
+    h = splitmix64(h ^ static_cast<std::uint64_t>(static_cast<std::uint32_t>(chunk.y)));
+
     return h;
 }
 

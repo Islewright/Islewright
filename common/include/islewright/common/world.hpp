@@ -17,8 +17,8 @@ struct ChunkCoordHash
 {
     std::size_t operator()(const ChunkCoord& c) const noexcept
     {
-        return (static_cast<std::size_t>(static_cast<std::uint32_t>(c.cx)) << 32) |
-               static_cast<std::size_t>(static_cast<std::uint32_t>(c.cy));
+        return (static_cast<std::size_t>(static_cast<std::uint32_t>(c.x)) << 32) |
+               static_cast<std::size_t>(static_cast<std::uint32_t>(c.y));
     }
 };
 
