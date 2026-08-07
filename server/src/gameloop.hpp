@@ -22,6 +22,8 @@ class GameLoop
     GameLoop() = default;
     GameLoop(const GameLoop&) = delete;
     GameLoop& operator=(const GameLoop&) = delete;
+    GameLoop(GameLoop&&) = delete;
+    GameLoop& operator=(GameLoop&&) = delete;
 
     ~GameLoop()
     {

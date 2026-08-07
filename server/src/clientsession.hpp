@@ -54,8 +54,8 @@ class ClientSession : public ClientConnector
 
     void End()
     {
-        EndNetworking();
         m_gameInstance.Stop();
+        EndNetworking();
     }
 
     void OnConnect() override
