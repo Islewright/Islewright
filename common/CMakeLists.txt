@@ -1,6 +1,7 @@
 add_library(islewright-common STATIC
     src/version.cpp
     src/world.cpp
+    src/worldgen.cpp
 )
 
 add_library(Islewright::common ALIAS islewright-common)

@@ -1,6 +1,9 @@
 #include "islewright/common/world.hpp"
 
+#include "islewright/common/worldgen.hpp"
+
 #include <cstddef>
+#include <utility>
 
 namespace islewright::common {
 
@@ -27,6 +30,20 @@ entt::entity World::EmplaceChunk(Chunk chunk)
     m_registry.emplace<Chunk>(e, std::move(chunk));
     m_index.insert_or_assign(coord, e);
     return e;
+}
+
+entt::entity World::EnsureChunk(ChunkCoord coord)
+{
+    if (const auto it = m_index.find(coord); it != m_index.end()) {
+        return it->second;
+    }
+
+    Chunk chunk{};
+    chunk.coord = coord;
+
+    generate_chunk(chunk, m_seed);
+
+    return EmplaceChunk(std::move(chunk));
 }
 
 bool World::HasChunk(ChunkCoord coord) const noexcept
