@@ -1,4 +1,5 @@
 ﻿#include "networkmanager.hpp"
+#include "islewright/common/version.hpp"
 
 #include <cstdlib>
 #include <charconv>
@@ -8,6 +9,8 @@
 
 int main()
 {
+    std::cout << islewright::common::project_name() << " mockclient " << islewright::common::project_version() << '\n';
+
     islewright::networkmanager::NetworkManager networkManager;
 
     if (!networkManager.Connect()) {
@@ -21,7 +24,7 @@ int main()
 
     std::string message;
 
-    while (std::getline(std::cin, message)) {
+    while (std::getline(std::cin, message)) {   
         if (message == "quit") {
             break;
         }
