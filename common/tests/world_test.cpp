@@ -31,6 +31,21 @@ struct MutableChunkUpdateCounter
     }
 };
 
+const Chunk* FindChunk(const World& world, ChunkCoord coord)
+{
+    auto view = world.Registry().view<const Chunk>();
+
+    for (const entt::entity entity : view) {
+        const Chunk& chunk = view.get<const Chunk>(entity);
+
+        if (chunk.coord == coord) {
+            return &chunk;
+        }
+    }
+
+    return nullptr;
+}
+
 } // namespace
 
 template <typename WorldType, typename Receiver>
@@ -59,33 +74,63 @@ int main()
     const World& readOnlyWorld = world;
     assert(&readOnlyWorld.Registry() == &world.Registry());
 
-    // Generation is deterministic and independent of call order.
-    Chunk firstOrigin{.coord = ChunkCoord{.x = 0, .y = 0}, .tiles = {}};
-    Chunk firstOther{.coord = ChunkCoord{.x = 1, .y = 0}, .tiles = {}};
-    Chunk secondOrigin{.coord = ChunkCoord{.x = 0, .y = 0}, .tiles = {}};
-    Chunk secondOther{.coord = ChunkCoord{.x = 1, .y = 0}, .tiles = {}};
+    // World forwards generation inputs and loading order does not affect results.
+    constexpr ChunkCoord originCoord{.x = 0, .y = 0};
+    constexpr ChunkCoord otherCoord{.x = 1, .y = 0};
+    constexpr SetBiomeCommand originCommand{.coord = TileCoord{.x = 0, .y = 0},
+                                            .biome = BiomeType::Mountain};
+    constexpr SetBiomeCommand otherCommand{.coord = TileCoord{.x = CHUNK_WIDTH, .y = 0},
+                                           .biome = BiomeType::Mountain};
 
-    generate_chunk(firstOrigin, 42);
-    generate_chunk(firstOther, 42);
-    generate_chunk(secondOther, 42);
-    generate_chunk(secondOrigin, 42);
+    World first{42};
+    first.Apply(originCommand);
+    first.Apply(otherCommand);
 
-    assert(firstOrigin.tiles == secondOrigin.tiles);
-    assert(firstOther.tiles == secondOther.tiles);
+    World second{42};
+    second.Apply(otherCommand);
+    second.Apply(originCommand);
+
+    const Chunk* firstOrigin = FindChunk(first, originCoord);
+    const Chunk* firstOther = FindChunk(first, otherCoord);
+    const Chunk* secondOrigin = FindChunk(second, originCoord);
+    const Chunk* secondOther = FindChunk(second, otherCoord);
+    assert(firstOrigin != nullptr && firstOther != nullptr);
+    assert(secondOrigin != nullptr && secondOther != nullptr);
+
+    Chunk expectedOrigin{.coord = originCoord, .tiles = {}};
+    Chunk expectedOther{.coord = otherCoord, .tiles = {}};
+
+    generate_chunk(expectedOrigin, 42);
+    generate_chunk(expectedOther, 42);
+
+    expectedOrigin.tiles[0].biome = originCommand.biome;
+    expectedOther.tiles[0].biome = otherCommand.biome;
+    assert(firstOrigin->tiles == expectedOrigin.tiles);
+    assert(firstOther->tiles == expectedOther.tiles);
+    assert(secondOrigin->tiles == expectedOrigin.tiles);
+    assert(secondOther->tiles == expectedOther.tiles);
 
     bool hasLand = false;
 
-    for (const Tile& tile : firstOrigin.tiles) {
+    for (const Tile& tile : firstOrigin->tiles) {
         hasLand |= tile.id == TileId::Grass || tile.id == TileId::Stone;
     }
 
     assert(hasLand);
 
-    Chunk differentOrigin{.coord = firstOrigin.coord, .tiles = {}};
+    World different{43};
+    different.Apply(originCommand);
 
-    generate_chunk(differentOrigin, 43);
+    const Chunk* differentOrigin = FindChunk(different, originCoord);
+    assert(differentOrigin != nullptr);
 
-    assert(firstOrigin.tiles != differentOrigin.tiles);
+    Chunk expectedDifferentOrigin{.coord = originCoord, .tiles = {}};
+
+    generate_chunk(expectedDifferentOrigin, 43);
+
+    expectedDifferentOrigin.tiles[0].biome = originCommand.biome;
+    assert(differentOrigin->tiles == expectedDifferentOrigin.tiles);
+    assert(firstOrigin->tiles != differentOrigin->tiles);
 
     Chunk distant{.coord = ChunkCoord{.x = 10, .y = 10}};
 
