@@ -2,9 +2,9 @@
 #define ISLEWRIGHT_GAMEINSTANCE_HPP
 
 #include "gameloop.hpp"
-#include "islewright/common/world.hpp"
-#include "islewright/common/protocolversion.hpp"
 #include "islewright.pb.h"
+#include "islewright/common/protocolversion.hpp"
+#include "islewright/common/world.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -62,10 +62,10 @@ class GameInstance
     void Enqueue(Packet packet)
     {
         std::lock_guard<std::mutex> lock(m_packetMutex);
-        if(m_packets.size() >= MAX_PACKET_QUEUE_SIZE) {
+        if (m_packets.size() >= MAX_PACKET_QUEUE_SIZE) {
             return;
         }
-        
+
         m_packets.push(std::move(packet));
     }
 

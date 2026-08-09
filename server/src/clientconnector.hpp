@@ -150,8 +150,7 @@ class ClientConnector
 
         std::lock_guard<std::mutex> lock(m_sendMutex);
 
-        if (!m_isNetworking || m_clientInfo == nullptr ||
-            m_clientInfo->socket == INVALID_SOCKET) {
+        if (!m_isNetworking || m_clientInfo == nullptr || m_clientInfo->socket == INVALID_SOCKET) {
             return false;
         }
 
@@ -246,8 +245,8 @@ class ClientConnector
     void Recv()
     {
         while (m_isNetworking) {
-            int ret = recv(m_clientInfo->socket, m_clientInfo->recvBuffer,
-                           ClientInfo::BUFFER_SIZE, 0);
+            int ret =
+                recv(m_clientInfo->socket, m_clientInfo->recvBuffer, ClientInfo::BUFFER_SIZE, 0);
 
             if (ret > 0) {
                 if (!ProcessReceivedData(m_clientInfo->recvBuffer, ret)) {

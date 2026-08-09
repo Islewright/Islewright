@@ -1,10 +1,10 @@
 #ifndef ISLEWRIGHT_NETWORKMANAGER_HPP
 #define ISLEWRIGHT_NETWORKMANAGER_HPP
 
-#include "tcpconnector.hpp"
-#include "islewright/common/serializer.hpp"
-#include "islewright/common/protocolversion.hpp"
 #include "islewright.pb.h"
+#include "islewright/common/protocolversion.hpp"
+#include "islewright/common/serializer.hpp"
+#include "tcpconnector.hpp"
 
 #include <atomic>
 #include <cstddef>

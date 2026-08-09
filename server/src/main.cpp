@@ -6,8 +6,9 @@
 
 int main()
 {
-    std::cout << islewright::common::project_name() << " server " << islewright::common::project_version() << '\n';
-    
+    std::cout << islewright::common::project_name() << " server "
+              << islewright::common::project_version() << '\n';
+
     using ClientSession = islewright::clientsession::ClientSession;
 
     ClientSession session;

@@ -5,9 +5,9 @@
 #include <chrono>
 #include <cstdint>
 #include <functional>
+#include <mutex>
 #include <thread>
 #include <utility>
-#include <mutex>
 
 namespace islewright::gameloop {
 
@@ -66,15 +66,14 @@ class GameLoop
             handler(tick++);
             nextTick += TICK_INTERVAL;
             const auto now = Clock::now();
-            if(nextTick < now)
-            {
+            if (nextTick < now) {
                 nextTick = now;
                 continue;
             }
             std::this_thread::sleep_until(nextTick);
         }
     }
-    
+
     std::atomic_bool m_running = false;
     std::thread m_thread;
     std::mutex m_lifecycleMutex;

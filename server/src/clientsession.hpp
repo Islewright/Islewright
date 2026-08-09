@@ -3,9 +3,9 @@
 
 #include "clientconnector.hpp"
 #include "gameinstance.hpp"
-#include "islewright/common/serializer.hpp"
-#include "islewright/common/protocolversion.hpp"
 #include "islewright.pb.h"
+#include "islewright/common/protocolversion.hpp"
+#include "islewright/common/serializer.hpp"
 
 #include <cstddef>
 #include <iostream>
@@ -22,8 +22,7 @@ using Packet = islewright::protocol::Packet;
 class ClientSession : public ClientConnector
 {
   public:
-    explicit ClientSession(USHORT port = 9000)
-        : ClientConnector(port)
+    explicit ClientSession(USHORT port = 9000) : ClientConnector(port)
     {
         m_gameInstance.SetResponseHandler(
             [this](const Packet& packet) { return SendPacket(packet); });

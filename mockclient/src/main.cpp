@@ -1,15 +1,16 @@
-﻿#include "networkmanager.hpp"
-#include "islewright/common/version.hpp"
+﻿#include "islewright/common/version.hpp"
+#include "networkmanager.hpp"
 
-#include <cstdlib>
 #include <charconv>
 #include <cstdint>
+#include <cstdlib>
 #include <iostream>
 #include <string>
 
 int main()
 {
-    std::cout << islewright::common::project_name() << " mockclient " << islewright::common::project_version() << '\n';
+    std::cout << islewright::common::project_name() << " mockclient "
+              << islewright::common::project_version() << '\n';
 
     islewright::networkmanager::NetworkManager networkManager;
 
@@ -24,7 +25,7 @@ int main()
 
     std::string message;
 
-    while (std::getline(std::cin, message)) {   
+    while (std::getline(std::cin, message)) {
         if (message == "quit") {
             break;
         }
