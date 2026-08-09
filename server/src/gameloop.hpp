@@ -37,7 +37,13 @@ class GameLoop
             return;
         }
 
-        m_thread = std::thread([this, handler = std::move(handler)]() { Run(handler); });
+        try {
+            m_thread = std::thread([this, handler = std::move(handler)]() { Run(handler); });
+        } catch (const std::exception& e) {
+            std::cout << "[ERROR]" << e.what() << std::endl;
+            m_running.store(false);
+            throw;
+        }
     }
 
     void Stop()
