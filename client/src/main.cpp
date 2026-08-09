@@ -72,7 +72,8 @@ int main(int argc, char* argv[])
         // Handle camera movement and zoom
         if (input.WindowResized()) {
             SDL_GetWindowSize(window, &windowWidth, &windowHeight);
-            camera.SetViewportSize(static_cast<float>(windowWidth), static_cast<float>(windowHeight));
+            camera.SetViewportSize(static_cast<float>(windowWidth),
+                                   static_cast<float>(windowHeight));
         }
 
         // Adjust pan speed based on delta time and camera zoom level
