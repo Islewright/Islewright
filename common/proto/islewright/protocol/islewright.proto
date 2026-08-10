@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package islewright.protocol;
+
+message Packet {
+  uint32 protocol_version = 1;
+  uint64 request_id = 2;
+
+  oneof payload {
+    CreateWorldRequest create_world_request = 10;
+    CreateWorldResponse create_world_response = 11;
+    ErrorResponse error_response = 12;
+  }
+}
+
+message CreateWorldRequest {
+  optional uint64 seed = 1;
+}
+
+message CreateWorldResponse {
+  uint64 seed = 1;
+}
+
+message ErrorResponse {
+  enum Code {
+    UNSPECIFIED = 0;
+    INVALID_REQUEST = 1;
+    UNSUPPORTED_VERSION = 2;
+    INTERNAL_ERROR = 3;
+  }
+
+  Code code = 1;
+  string message = 2;
+}
