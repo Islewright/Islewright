@@ -2,6 +2,7 @@ add_library(islewright-common STATIC
     src/serializer.cpp
     src/version.cpp
     src/world.cpp
+    src/worldgen.cpp
     proto/islewright/protocol/islewright.proto
 )
 

@@ -15,11 +15,11 @@ struct TileCoord
     bool operator==(const TileCoord&) const = default;
 };
 
-// Chunk-space coordinate. One chunk spans kChunkW x kChunkH tiles.
+// Chunk-space coordinate. One chunk spans CHUNK_WIDTH x CHUNK_HEIGHT tiles.
 struct ChunkCoord
 {
-    int cx;
-    int cy;
+    int x;
+    int y;
 
     bool operator==(const ChunkCoord&) const = default;
 };
@@ -27,16 +27,17 @@ struct ChunkCoord
 // Maps a tile coordinate to the chunk that contains it.
 constexpr ChunkCoord to_chunk(TileCoord tile) noexcept
 {
-    return ChunkCoord{floor_div(tile.x, kChunkW), floor_div(tile.y, kChunkH)};
+    return ChunkCoord{floor_div(tile.x, CHUNK_WIDTH), floor_div(tile.y, CHUNK_HEIGHT)};
 }
 
 // Maps a tile coordinate to its packed index within its chunk's tile array:
-// ly * kChunkW + lx, with lx in [0, kChunkW) and ly in [0, kChunkH).
+// y * CHUNK_WIDTH + x, with x in [0, CHUNK_WIDTH) and y in [0, CHUNK_HEIGHT).
 constexpr int local_index(TileCoord tile) noexcept
 {
-    const int lx = floor_mod(tile.x, kChunkW);
-    const int ly = floor_mod(tile.y, kChunkH);
-    return ly * kChunkW + lx;
+    const int x = floor_mod(tile.x, CHUNK_WIDTH);
+    const int y = floor_mod(tile.y, CHUNK_HEIGHT);
+
+    return y * CHUNK_WIDTH + x;
 }
 
 } // namespace islewright::common

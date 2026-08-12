@@ -12,7 +12,7 @@ namespace islewright::common {
 struct Chunk
 {
     ChunkCoord coord;
-    std::array<Tile, kChunkW * kChunkH> tiles;
+    std::array<Tile, CHUNK_WIDTH * CHUNK_HEIGHT> tiles;
 };
 
 } // namespace islewright::common

@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <limits>
 
 using namespace islewright::common;
 
@@ -46,6 +47,54 @@ int main()
     Chunk dup{};
     dup.coord = ChunkCoord{0, 0};
     assert(w.EmplaceChunk(dup) == e);
+
+    // generation is deterministic and independent of chunk load order
+    World first{42};
+    World second{42};
+
+    const entt::entity firstOrigin = first.EnsureChunk(ChunkCoord{0, 0});
+    const entt::entity firstOther = first.EnsureChunk(ChunkCoord{1, 0});
+    const entt::entity secondOther = second.EnsureChunk(ChunkCoord{1, 0});
+    const entt::entity secondOrigin = second.EnsureChunk(ChunkCoord{0, 0});
+
+    assert(first.Registry().get<Chunk>(firstOrigin).tiles ==
+           second.Registry().get<Chunk>(secondOrigin).tiles);
+    assert(first.Registry().get<Chunk>(firstOther).tiles ==
+           second.Registry().get<Chunk>(secondOther).tiles);
+    assert(first.EnsureChunk(ChunkCoord{0, 0}) == firstOrigin);
+
+    bool hasLand = false;
+
+    for (const Tile& tile : first.Registry().get<Chunk>(firstOrigin).tiles) {
+        hasLand |= tile.id == TileId::Grass || tile.id == TileId::Stone;
+    }
+
+    assert(hasLand);
+
+    World different{43};
+    const entt::entity differentOrigin = different.EnsureChunk(ChunkCoord{0, 0});
+
+    assert(first.Registry().get<Chunk>(firstOrigin).tiles !=
+           different.Registry().get<Chunk>(differentOrigin).tiles);
+
+    const entt::entity distant = first.EnsureChunk(ChunkCoord{10, 10});
+
+    for (const Tile& tile : first.Registry().get<Chunk>(distant).tiles) {
+        assert((tile == Tile{TileId::Water, BiomeType::Ocean}));
+    }
+
+    const ChunkCoord extremeCoords[] = {
+        ChunkCoord{std::numeric_limits<int>::min(), std::numeric_limits<int>::min()},
+        ChunkCoord{std::numeric_limits<int>::max(), std::numeric_limits<int>::max()},
+    };
+
+    for (const ChunkCoord coord : extremeCoords) {
+        const entt::entity extreme = first.EnsureChunk(coord);
+
+        for (const Tile& tile : first.Registry().get<Chunk>(extreme).tiles) {
+            assert((tile == Tile{TileId::Water, BiomeType::Ocean}));
+        }
+    }
 
     return 0;
 }
