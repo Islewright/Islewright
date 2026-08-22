@@ -1,4 +1,5 @@
 #include "gameinstance.hpp"
+#include "chunkresponse.hpp"
 
 #include "islewright/common/constants.hpp"
 #include "islewright/common/protocolversion.hpp"
@@ -105,7 +106,71 @@ int main()
         }
     }
 
+    game.Enqueue(MakeChunkRequest(4, -2, 3));
+    assert(waitForResponses(4));
+    {
+        std::lock_guard<std::mutex> lock(responseMutex);
+        assert(responses[3].request_id() == 4);
+        assert(responses[3].has_chunk_response());
+        assert(responses[3].chunk_response().tile_ids() ==
+               responses[2].chunk_response().tile_ids());
+        assert(responses[3].chunk_response().biomes() ==
+               responses[2].chunk_response().biomes());
+    }
+
+    Packet duplicateWorld;
+    duplicateWorld.set_protocol_version(PROTOCOL_VERSION);
+    duplicateWorld.set_request_id(5);
+    duplicateWorld.mutable_create_world_request()->set_seed(99);
+    game.Enqueue(std::move(duplicateWorld));
+    assert(waitForResponses(5));
+    {
+        std::lock_guard<std::mutex> lock(responseMutex);
+        assert(responses[4].request_id() == 5);
+        assert(responses[4].has_error_response());
+        assert(responses[4].error_response().code() == ErrorResponse::INVALID_REQUEST);
+    }
+
+    Packet unsupportedVersion = MakeChunkRequest(6, 0, 0);
+    unsupportedVersion.set_protocol_version(PROTOCOL_VERSION + 1);
+    game.Enqueue(std::move(unsupportedVersion));
+    assert(waitForResponses(6));
+    {
+        std::lock_guard<std::mutex> lock(responseMutex);
+        assert(responses[5].request_id() == 6);
+        assert(responses[5].has_error_response());
+        assert(responses[5].error_response().code() == ErrorResponse::UNSUPPORTED_VERSION);
+    }
+
+    Packet unsupportedService;
+    unsupportedService.set_protocol_version(PROTOCOL_VERSION);
+    unsupportedService.set_request_id(7);
+    game.Enqueue(std::move(unsupportedService));
+    assert(waitForResponses(7));
+    {
+        std::lock_guard<std::mutex> lock(responseMutex);
+        assert(responses[6].request_id() == 7);
+        assert(responses[6].has_error_response());
+        assert(responses[6].error_response().code() == ErrorResponse::INVALID_REQUEST);
+    }
+
     game.Stop();
     game.SetResponseHandler({});
+
+    islewright::common::World firstWorld{42};
+    islewright::common::World secondWorld{43};
+    const auto firstEntity = firstWorld.EnsureChunk({0, 0});
+    const auto secondEntity = secondWorld.EnsureChunk({0, 0});
+    islewright::protocol::ChunkResponse firstResponse;
+    islewright::protocol::ChunkResponse secondResponse;
+    islewright::chunkresponse::FillChunkResponse(
+        firstWorld.Registry().get<islewright::common::Chunk>(firstEntity), firstResponse);
+    islewright::chunkresponse::FillChunkResponse(
+        secondWorld.Registry().get<islewright::common::Chunk>(secondEntity), secondResponse);
+    assert(firstResponse.chunk_x() == 0 && firstResponse.chunk_y() == 0);
+    assert(firstResponse.tile_ids().size() == CHUNK_WIDTH * CHUNK_HEIGHT);
+    assert(firstResponse.biomes().size() == CHUNK_WIDTH * CHUNK_HEIGHT);
+    assert(firstResponse.tile_ids() != secondResponse.tile_ids() ||
+           firstResponse.biomes() != secondResponse.biomes());
     return 0;
 }

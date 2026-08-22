@@ -1,6 +1,7 @@
 #ifndef ISLEWRIGHT_GAMEINSTANCE_HPP
 #define ISLEWRIGHT_GAMEINSTANCE_HPP
 
+#include "chunkresponse.hpp"
 #include "gameloop.hpp"
 #include "islewright.pb.h"
 #include "islewright/common/protocolversion.hpp"
@@ -155,26 +156,13 @@ class GameInstance
         const entt::entity entity = m_world->EnsureChunk(coord);
         const auto& chunk = m_world->Registry().get<islewright::common::Chunk>(entity);
 
-        std::string tileIds;
-        std::string biomes;
-        tileIds.reserve(chunk.tiles.size());
-        biomes.reserve(chunk.tiles.size());
-
-        for (const auto& tile : chunk.tiles) {
-            tileIds.push_back(static_cast<char>(tile.id));
-            biomes.push_back(static_cast<char>(tile.biome));
-        }
-
         Packet response;
 
         response.set_protocol_version(islewright::common::PROTOCOL_VERSION);
         response.set_request_id(request.request_id());
 
-        auto* chunkResponse = response.mutable_chunk_response();
-        chunkResponse->set_chunk_x(coord.x);
-        chunkResponse->set_chunk_y(coord.y);
-        chunkResponse->set_tile_ids(std::move(tileIds));
-        chunkResponse->set_biomes(std::move(biomes));
+        islewright::chunkresponse::FillChunkResponse(
+            chunk, *response.mutable_chunk_response());
 
         SendResponse(response);
     }

@@ -25,8 +25,14 @@ target_link_libraries(islewright-common
 )
 
 add_executable(islewright-common-tests
-    tests/serializer_test.cpp
     tests/world_test.cpp
 )
 target_link_libraries(islewright-common-tests PRIVATE Islewright::common)
 add_test(NAME common-tests COMMAND islewright-common-tests)
+
+add_executable(islewright-serializer-tests
+    tests/serializer_test.cpp
+    tests/serializer_test_main.cpp
+)
+target_link_libraries(islewright-serializer-tests PRIVATE Islewright::common)
+add_test(NAME serializer-tests COMMAND islewright-serializer-tests)

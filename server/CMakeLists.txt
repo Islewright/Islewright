@@ -1,5 +1,7 @@
 add_executable(islewright-server
     src/main.cpp
+    src/chunkresponse.cpp
+    src/chunkresponse.hpp
     src/clientinfo.hpp
     src/clientconnector.hpp
     src/clientsession.hpp
@@ -14,6 +16,7 @@ target_link_libraries(islewright-server
 )
 
 add_executable(islewright-server-tests
+    src/chunkresponse.cpp
     tests/gameinstance_test.cpp
 )
 
