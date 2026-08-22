@@ -99,18 +99,16 @@ class TcpConnector
     {
         m_isNetworking = false;
 
-        if (m_socket != INVALID_SOCKET) {
-            shutdown(m_socket, SD_BOTH);
+        {
+            std::lock_guard<std::mutex> lock(m_sendMutex);
+            if (m_socket != INVALID_SOCKET) {
+                shutdown(m_socket, SD_BOTH);
+                CloseSocket();
+            }
         }
 
         if (m_recvThread.joinable()) {
             m_recvThread.join();
-        }
-
-        std::lock_guard<std::mutex> lock(m_sendMutex);
-
-        if (m_socket != INVALID_SOCKET) {
-            CloseSocket();
         }
     }
 
@@ -214,7 +212,9 @@ class TcpConnector
                 std::cout << "[RECV] Server connection closed\n";
                 m_isNetworking = false;
             } else {
-                std::cout << "[ERROR] recv() failed:" << WSAGetLastError() << "\n";
+                if (m_isNetworking) {
+                    std::cout << "[ERROR] recv() failed:" << WSAGetLastError() << "\n";
+                }
                 m_isNetworking = false;
             }
         }

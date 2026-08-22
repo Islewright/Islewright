@@ -12,3 +12,11 @@ target_link_libraries(islewright-server
         Islewright::common
         ws2_32
 )
+
+add_executable(islewright-server-tests
+    tests/gameinstance_test.cpp
+)
+
+target_include_directories(islewright-server-tests PRIVATE src)
+target_link_libraries(islewright-server-tests PRIVATE Islewright::common)
+add_test(NAME server-tests COMMAND islewright-server-tests)
