@@ -1,6 +1,8 @@
 #ifndef ISLEWRIGHT_TCPCONNECTOR_HPP
 #define ISLEWRIGHT_TCPCONNECTOR_HPP
 
+#include "islewright/common/networklimits.hpp"
+
 #include <WS2tcpip.h>
 #include <WinSock2.h>
 #include <atomic>
@@ -27,8 +29,7 @@ class TcpConnector
                                      std::to_string(ret));
         }
 
-        m_recvBuffer = new char[BUFFER_SIZE + 1];
-        m_sendBuffer = new char[BUFFER_SIZE + 1];
+        m_recvBuffer = new char[common::networklimits::RECEIVE_BUFFER_SIZE];
     }
 
     virtual ~TcpConnector()
@@ -36,7 +37,6 @@ class TcpConnector
         EndNetworking();
 
         delete[] m_recvBuffer;
-        delete[] m_sendBuffer;
 
         WSACleanup();
     }
@@ -116,7 +116,8 @@ class TcpConnector
 
     bool Send(const char* msg, const int len)
     {
-        if (msg == nullptr || len <= 0 || len > BUFFER_SIZE) {
+        if (msg == nullptr || len <= 0 ||
+            len > static_cast<int>(common::networklimits::MAX_FRAME_SIZE)) {
             return false;
         }
 
@@ -171,7 +172,7 @@ class TcpConnector
             std::memcpy(&networkLength, m_receiveAccumulator.data(), HEADER_SIZE);
 
             const uint32_t payloadLength = ntohl(networkLength);
-            if (payloadLength == 0 || payloadLength > BUFFER_SIZE) {
+            if (payloadLength == 0 || payloadLength > common::networklimits::MAX_FRAME_SIZE) {
                 std::cout << "[ERROR] Invalid payload length:" << payloadLength << "\n";
                 return false;
             }
@@ -203,7 +204,7 @@ class TcpConnector
     void Recv()
     {
         while (m_isNetworking) {
-            int ret = recv(m_socket, m_recvBuffer, BUFFER_SIZE, 0);
+            int ret = recv(m_socket, m_recvBuffer, common::networklimits::RECEIVE_BUFFER_SIZE, 0);
 
             if (ret > 0) {
                 if (!ProcessReceivedData(m_recvBuffer, ret)) {
@@ -231,9 +232,7 @@ class TcpConnector
     std::mutex m_sendMutex;
     std::vector<char> m_receiveAccumulator;
 
-    static constexpr int BUFFER_SIZE = 1024;
     char* m_recvBuffer = nullptr;
-    char* m_sendBuffer = nullptr;
 };
 
 } // namespace islewright::tcpconnector

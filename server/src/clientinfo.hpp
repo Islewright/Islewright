@@ -1,8 +1,9 @@
 #ifndef ISLEWRIGHT_CLIENTINFO_HPP
 #define ISLEWRIGHT_CLIENTINFO_HPP
 
+#include "islewright/common/networklimits.hpp"
+
 #include <WinSock2.h>
-#include <cstring>
 
 namespace islewright::clientinfo {
 
@@ -11,24 +12,17 @@ struct ClientInfo
     SOCKET socket = INVALID_SOCKET;
     SOCKADDR_IN clientAddr{};
 
-    static constexpr int BUFFER_SIZE = 1024;
-
     char* recvBuffer = nullptr;
-    char* sendBuffer = nullptr;
 
     ClientInfo(SOCKET clientSocket, const SOCKADDR_IN& clientAddr)
         : socket(clientSocket), clientAddr(clientAddr)
     {
-        recvBuffer = new char[BUFFER_SIZE + 1];
-        std::memset(recvBuffer, 0, BUFFER_SIZE + 1);
-        sendBuffer = new char[BUFFER_SIZE + 1];
-        std::memset(sendBuffer, 0, BUFFER_SIZE + 1);
+        recvBuffer = new char[common::networklimits::RECEIVE_BUFFER_SIZE];
     }
 
     ~ClientInfo()
     {
         delete[] recvBuffer;
-        delete[] sendBuffer;
     }
 };
 
